@@ -954,17 +954,11 @@
       fb.classList.add('hidden');
 
       try {
-        // Cipta client sementara supaya sesi login Admin semasa TIDAK terganggu
-        const tempSb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-          auth: { persistSession: false, autoRefreshToken: false }
-        });
-
-        const { data, error } = await tempSb.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { staff_name: staffName, role: role }
-          }
+        const { data, error } = await sb.rpc('admin_create_staff', {
+          p_email: email,
+          p_password: password,
+          p_staff_name: staffName,
+          p_role: role
         });
 
         if (error) throw error;
