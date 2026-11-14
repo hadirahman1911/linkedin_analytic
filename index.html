@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kunkwan LinkedIn Leads Portal</title>
+  <title>Kunkwan LinkedIn Leads & Analytics Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -59,12 +60,20 @@
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-sm">K</div>
           <div>
-            <h1 class="text-base font-bold tracking-tight">LinkedIn Connections Listing</h1>
+            <h1 class="text-base font-bold tracking-tight">LinkedIn Leads & Outreach Analytics</h1>
             <p class="text-[11px] text-blue-200">Akses Terkawal Mengikut PIC Team</p>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
+          <!-- Dropdown Filter PIC Team (Aktif jika Admin) -->
+          <div id="adminFilterWrapper" class="hidden">
+            <select id="picTeamFilter" onchange="onTeamFilterChange()"
+              class="text-xs font-semibold bg-white/10 text-white border border-white/20 rounded-xl px-3.5 py-2 outline-none focus:ring-2 focus:ring-blue-400">
+              <option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>
+            </select>
+          </div>
+
           <div class="text-right">
             <p id="navStaffName" class="text-xs font-bold text-white">-</p>
             <p id="navRoleBadge" class="text-[10px] text-emerald-300 uppercase font-semibold tracking-wider">-</p>
@@ -80,77 +89,239 @@
     <!-- Kandungan Utama -->
     <main class="max-w-7xl w-full mx-auto px-6 py-6 space-y-6 flex-1">
 
-      <!-- Tab Header & Ringkasan -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex items-center gap-2 border-b-2 border-blue-600 pb-2">
-          <span class="text-sm font-extrabold text-blue-700">📋 Senarai Prospek (pic_team)</span>
-          <span id="totalBadge" class="bg-blue-100 text-blue-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full">0</span>
+      <!-- ==========================================
+           SEKSYEN ANALITIK RINGKAS (KPI CARDS)
+           ========================================== -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Jumlah Connections (All)</p>
+            <p id="statTotalAll" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
+            <p class="text-[11px] text-slate-500 mt-1">Keseluruhan prospek PIC</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-lg">👥</div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- Dropdown Filter PIC Team (Aktif jika Admin) -->
-          <div id="adminFilterWrapper" class="hidden">
-            <select id="picTeamFilter" onchange="resetAndLoad()"
-              class="text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="ALL">Semua PIC Team (Admin View)</option>
-            </select>
+        <div class="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-amber-50/40">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Belum Mesej (No)</p>
+            <p id="statTotalNo" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
+            <p class="text-[11px] text-amber-700/80 mt-1">Keutamaan tindakan DM</p>
           </div>
+          <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-extrabold text-lg">⏳</div>
+        </div>
 
-          <!-- Kotak Carian -->
-          <input id="searchInput" type="text" placeholder="Cari nama, syarikat, jawatan, emel..."
-            onkeyup="debounceSearch()"
-            class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 w-64 outline-none focus:ring-2 focus:ring-blue-500" />
+        <div class="bg-white p-5 rounded-2xl border border-emerald-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-emerald-50/40">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Sudah Mesej (Yes)</p>
+            <p id="statTotalYes" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
+            <p class="text-[11px] text-emerald-700/80 mt-1">Telah dihubungi di LinkedIn</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-extrabold text-lg">✅</div>
+        </div>
 
-          <!-- Butang Eksport CSV -->
-          <button onclick="exportCurrentCsv()"
-            class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition shadow-sm cursor-pointer">
-            ⬇ Eksport CSV
-          </button>
+        <div class="bg-white p-5 rounded-2xl border border-indigo-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-indigo-50/40">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Kadar Outreach</p>
+            <p id="statRate" class="text-2xl font-extrabold text-indigo-600 mt-1">0%</p>
+            <p class="text-[11px] text-indigo-700/80 mt-1">Peratusan prospek di-DM</p>
+          </div>
+          <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-lg">📈</div>
         </div>
       </div>
 
-      <!-- Jadual Data Penuh (Semua Lajur linkedin_connections) -->
+      <!-- ==========================================
+           BAR CHART: CONNECTED ON
+           ========================================== -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-800">📊 Trend Tarikh Connected On</h2>
+            <p class="text-xs text-slate-500">Bilangan prospek berjaya disambung mengikut tarikh (30 tarikh terkini)</p>
+          </div>
+          <span id="chartRangeLabel" class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full self-start sm:self-auto">
+            Memuatkan graf...
+          </span>
+        </div>
+        <div class="h-56 w-full">
+          <canvas id="connectedChart"></canvas>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           NAVIGASI TAB (CONNECTIONS vs INVITATIONS)
+           ========================================== -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
-                <th class="py-3.5 px-4">#</th>
-                <th class="py-3.5 px-4">PIC Team</th>
-                <th class="py-3.5 px-4">First Name</th>
-                <th class="py-3.5 px-4">Last Name</th>
-                <th class="py-3.5 px-4">Position</th>
-                <th class="py-3.5 px-4">Company</th>
-                <th class="py-3.5 px-4">Email Address</th>
-                <th class="py-3.5 px-4">Profile URL</th>
-                <th class="py-3.5 px-4">Connected On</th>
-                <th class="py-3.5 px-4">Sumber Akaun (pic_name)</th>
-                <th class="py-3.5 px-4">Created At</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
-              <tr>
-                <td colspan="11" class="py-10 text-center text-slate-400">Memuatkan data...</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Tab Bar -->
+        <div class="flex items-center border-b border-slate-200 bg-slate-50/70 px-4 pt-3 gap-2">
+          <button id="tabBtnConnections" onclick="switchTab('connections')"
+            class="px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer">
+            <span>📋 Connections</span>
+            <span id="badgeTabConn" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[11px]">0</span>
+          </button>
+
+          <button id="tabBtnInvitations" onclick="switchTab('invitations')"
+            class="px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer">
+            <span>📨 Invitations</span>
+            <span id="badgeTabInv" class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-[11px]">0</span>
+          </button>
         </div>
 
-        <!-- Pagination -->
-        <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <p id="pageInfo" class="text-slate-500 font-medium">Memaparkan 0 - 0 daripada 0 rekod</p>
-          <div class="flex items-center gap-2">
-            <button id="btnPrev" onclick="changePage(-1)" disabled
-              class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
-              ← Sebelum
-            </button>
-            <span id="pageIndicator" class="font-bold text-slate-700 px-2">Halaman 1</span>
-            <button id="btnNext" onclick="changePage(1)" disabled
-              class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
-              Seterusnya →
-            </button>
+        <!-- ==========================================
+             KANDUNGAN TAB 1: CONNECTIONS
+             ========================================== -->
+        <div id="panelConnections">
+          <!-- Bar Penapis & Carian Connections -->
+          <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-white">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Dropdown Filter Status Message (Default = No) -->
+              <div class="flex items-center gap-1.5">
+                <label for="filterIsMessage" class="text-[11px] font-bold text-slate-500 uppercase">Status Message:</label>
+                <select id="filterIsMessage" onchange="resetConnAndLoad()"
+                  class="text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="No" selected>No (Belum Mesej)</option>
+                  <option value="Yes">Yes (Sudah Mesej)</option>
+                  <option value="ALL">All (Semua)</option>
+                </select>
+              </div>
+
+              <!-- Dropdown Sort Connected On (Default = Latest) -->
+              <div class="flex items-center gap-1.5">
+                <label for="sortConnectedOn" class="text-[11px] font-bold text-slate-500 uppercase">Susun Tarikh:</label>
+                <select id="sortConnectedOn" onchange="resetConnAndLoad()"
+                  class="text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="desc" selected>Connected On: Latest → Terlama</option>
+                  <option value="asc">Connected On: Terlama → Latest</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <input id="searchConnInput" type="text" placeholder="Cari nama, syarikat, jawatan, emel..."
+                onkeyup="debounceConnSearch()"
+                class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 w-64 outline-none focus:ring-2 focus:ring-blue-500" />
+
+              <button onclick="exportConnectionsCsv()"
+                class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm cursor-pointer">
+                ⬇ CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Jadual Connections -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  <th class="py-3.5 px-4">#</th>
+                  <th class="py-3.5 px-4">Status Message</th>
+                  <th class="py-3.5 px-4">PIC Team</th>
+                  <th class="py-3.5 px-4">First Name</th>
+                  <th class="py-3.5 px-4">Last Name</th>
+                  <th class="py-3.5 px-4">Position</th>
+                  <th class="py-3.5 px-4">Company</th>
+                  <th class="py-3.5 px-4">Email Address</th>
+                  <th class="py-3.5 px-4">Profile URL</th>
+                  <th class="py-3.5 px-4">Connected On</th>
+                  <th class="py-3.5 px-4">Sumber Akaun</th>
+                </tr>
+              </thead>
+              <tbody id="connTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+                <tr>
+                  <td colspan="11" class="py-10 text-center text-slate-400">Memuatkan data...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Connections -->
+          <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <p id="connPageInfo" class="text-slate-500 font-medium">Memaparkan 0 - 0 daripada 0 rekod</p>
+            <div class="flex items-center gap-2">
+              <button id="btnConnPrev" onclick="changeConnPage(-1)" disabled
+                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                ← Sebelum
+              </button>
+              <span id="connPageIndicator" class="font-bold text-slate-700 px-2">Halaman 1</span>
+              <button id="btnConnNext" onclick="changeConnPage(1)" disabled
+                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                Seterusnya →
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- ==========================================
+             KANDUNGAN TAB 2: INVITATIONS
+             ========================================== -->
+        <div id="panelInvitations" class="hidden">
+          <!-- Bar Penapis & Carian Invitations -->
+          <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-white">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div class="flex items-center gap-1.5">
+                <label for="filterInvDirection" class="text-[11px] font-bold text-slate-500 uppercase">Direction:</label>
+                <select id="filterInvDirection" onchange="resetInvAndLoad()"
+                  class="text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="ALL" selected>Semua Direction</option>
+                  <option value="OUTGOING">OUTGOING (Dihantar)</option>
+                  <option value="INCOMING">INCOMING (Diterima)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+              <input id="searchInvInput" type="text" placeholder="Cari nama penerima, pengirim, mesej..."
+                onkeyup="debounceInvSearch()"
+                class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 w-64 outline-none focus:ring-2 focus:ring-blue-500" />
+
+              <button onclick="exportInvitationsCsv()"
+                class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm cursor-pointer">
+                ⬇ CSV
+              </button>
+            </div>
+          </div>
+
+          <!-- Jadual Invitations -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  <th class="py-3.5 px-4">#</th>
+                  <th class="py-3.5 px-4">PIC Team</th>
+                  <th class="py-3.5 px-4">Direction</th>
+                  <th class="py-3.5 px-4">Sender (From)</th>
+                  <th class="py-3.5 px-4">Recipient (To)</th>
+                  <th class="py-3.5 px-4">Sent At</th>
+                  <th class="py-3.5 px-4">Invitation Note</th>
+                  <th class="py-3.5 px-4">Invitee URL</th>
+                  <th class="py-3.5 px-4">Akaun LinkedIn</th>
+                </tr>
+              </thead>
+              <tbody id="invTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+                <tr>
+                  <td colspan="9" class="py-10 text-center text-slate-400">Klik tab Invitations untuk memuatkan rekod...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Invitations -->
+          <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <p id="invPageInfo" class="text-slate-500 font-medium">Memaparkan 0 - 0 daripada 0 rekod</p>
+            <div class="flex items-center gap-2">
+              <button id="btnInvPrev" onclick="changeInvPage(-1)" disabled
+                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                ← Sebelum
+              </button>
+              <span id="invPageIndicator" class="font-bold text-slate-700 px-2">Halaman 1</span>
+              <button id="btnInvNext" onclick="changeInvPage(1)" disabled
+                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                Seterusnya →
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </main>
@@ -165,13 +336,24 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentProfile = null;
-    let currentPage = 1;
+    let activeTab = 'connections';
     const PAGE_SIZE = 50;
-    let totalRecords = 0;
-    let currentRows = [];
-    let searchTimer = null;
 
-    // Semak sesi login semasa halaman dibuka
+    // State Tab Connections
+    let connPage = 1;
+    let connTotal = 0;
+    let connRows = [];
+    let connSearchTimer = null;
+
+    // State Tab Invitations
+    let invPage = 1;
+    let invTotal = 0;
+    let invRows = [];
+    let invSearchTimer = null;
+
+    // Chart instance
+    let connectedChartInstance = null;
+
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
@@ -216,10 +398,9 @@
     }
 
     // ==========================================
-    // INISIALISASI DASHBOARD MENGIKUT STAFF_NAME
+    // INISIALISASI DASHBOARD
     // ==========================================
     async function initDashboard(user) {
-      // Ambil profil staf dari staff_profiles (dikawal oleh RLS)
       const { data: profile, error } = await sb
         .from('staff_profiles')
         .select('*')
@@ -240,13 +421,12 @@
       document.getElementById('navRoleBadge').textContent =
         profile.role === 'admin' ? 'ADMIN • SEMUA AKSES' : `STAF • FILTER: ${profile.staff_name}`;
 
-      // Jika Admin, muatkan senarai dropdown pic_team yang wujud
       if (profile.role === 'admin') {
         document.getElementById('adminFilterWrapper').classList.remove('hidden');
         await loadAdminTeamDropdown();
       }
 
-      await loadConnections();
+      await refreshAllData();
     }
 
     async function loadAdminTeamDropdown() {
@@ -258,59 +438,222 @@
       if (data) {
         const uniqueTeams = [...new Set(data.map(r => r.pic_team))].sort();
         const select = document.getElementById('picTeamFilter');
-        select.innerHTML = '<option value="ALL">Semua PIC Team (Admin View)</option>';
+        select.innerHTML = '<option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>';
         uniqueTeams.forEach(team => {
           const opt = document.createElement('option');
           opt.value = team;
+          opt.className = 'text-slate-900';
           opt.textContent = team;
           select.appendChild(opt);
         });
       }
     }
 
-    function debounceSearch() {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => {
-        currentPage = 1;
+    function getActiveTeamFilter() {
+      if (currentProfile.role !== 'admin') return currentProfile.staff_name;
+      return document.getElementById('picTeamFilter').value;
+    }
+
+    async function onTeamFilterChange() {
+      connPage = 1;
+      invPage = 1;
+      await refreshAllData();
+    }
+
+    async function refreshAllData() {
+      await Promise.all([
+        loadAnalyticsAndChart(),
+        loadConnections(),
+        loadInvitations()
+      ]);
+    }
+
+    // ==========================================
+    // ANALITIK KPI (Yes / No / All) & BAR CHART CONNECTED ON
+    // ==========================================
+    async function loadAnalyticsAndChart() {
+      const teamFilter = getActiveTeamFilter();
+
+      // 1. Kira jumlah All, No, Yes secara tepat menggunakan count:'exact'
+      const buildCountQuery = (msgStatus) => {
+        let q = sb.from('linkedin_connections').select('*', { count: 'exact', head: true });
+        if (teamFilter !== 'ALL') q = q.eq('pic_team', teamFilter);
+        if (msgStatus) q = q.eq('is_message', msgStatus);
+        return q;
+      };
+
+      const [resAll, resNo, resYes] = await Promise.all([
+        buildCountQuery(null),
+        buildCountQuery('No'),
+        buildCountQuery('Yes')
+      ]);
+
+      const countAll = resAll.count || 0;
+      const countNo = resNo.count || 0;
+      const countYes = resYes.count || 0;
+      const rate = countAll > 0 ? ((countYes / countAll) * 100).toFixed(1) : '0.0';
+
+      document.getElementById('statTotalAll').textContent = countAll.toLocaleString();
+      document.getElementById('statTotalNo').textContent = countNo.toLocaleString();
+      document.getElementById('statTotalYes').textContent = countYes.toLocaleString();
+      document.getElementById('statRate').textContent = `${rate}%`;
+
+      // 2. Tarik tarikh connected_on untuk bina Bar Chart
+      let dateQuery = sb
+        .from('linkedin_connections')
+        .select('connected_on')
+        .not('connected_on', 'is', null)
+        .order('connected_on', { ascending: false })
+        .limit(5000);
+
+      if (teamFilter !== 'ALL') {
+        dateQuery = dateQuery.eq('pic_team', teamFilter);
+      }
+
+      const { data: dateRows } = await dateQuery;
+      renderConnectedOnChart(dateRows || []);
+    }
+
+    function renderConnectedOnChart(rows) {
+      const countsByDate = {};
+      rows.forEach(r => {
+        if (!r.connected_on) return;
+        countsByDate[r.connected_on] = (countsByDate[r.connected_on] || 0) + 1;
+      });
+
+      // Susun tarikh menaik & ambil 30 tarikh terkini supaya bar chart jelas dibaca
+      const sortedDates = Object.keys(countsByDate).sort();
+      const recentDates = sortedDates.slice(-30);
+      const values = recentDates.map(d => countsByDate[d]);
+
+      const labelEl = document.getElementById('chartRangeLabel');
+      if (recentDates.length > 0) {
+        labelEl.textContent = `${recentDates[0]} hingga ${recentDates[recentDates.length - 1]}`;
+      } else {
+        labelEl.textContent = 'Tiada data tarikh';
+      }
+
+      const ctx = document.getElementById('connectedChart').getContext('2d');
+      if (connectedChartInstance) {
+        connectedChartInstance.destroy();
+      }
+
+      connectedChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: recentDates,
+          datasets: [{
+            label: 'Jumlah Connections',
+            data: values,
+            backgroundColor: 'rgba(37, 99, 235, 0.85)',
+            hoverBackgroundColor: 'rgba(29, 78, 216, 1)',
+            borderRadius: 6,
+            maxBarThickness: 28
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.parsed.y} connections`
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, font: { size: 10 } },
+              grid: { color: '#f1f5f9' }
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // PENUKARAN TAB (CONNECTIONS vs INVITATIONS)
+    // ==========================================
+    function switchTab(tabName) {
+      activeTab = tabName;
+      const btnConn = document.getElementById('tabBtnConnections');
+      const btnInv = document.getElementById('tabBtnInvitations');
+      const panelConn = document.getElementById('panelConnections');
+      const panelInv = document.getElementById('panelInvitations');
+
+      if (tabName === 'connections') {
+        btnConn.className = 'px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer';
+        btnInv.className = 'px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer';
+        panelConn.classList.remove('hidden');
+        panelInv.classList.add('hidden');
+      } else {
+        btnInv.className = 'px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer';
+        btnConn.className = 'px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer';
+        panelInv.classList.remove('hidden');
+        panelConn.classList.add('hidden');
+      }
+    }
+
+    // ==========================================
+    // TAB 1: CONNECTIONS LISTING
+    // ==========================================
+    function debounceConnSearch() {
+      clearTimeout(connSearchTimer);
+      connSearchTimer = setTimeout(() => {
+        connPage = 1;
         loadConnections();
       }, 350);
     }
 
-    function resetAndLoad() {
-      currentPage = 1;
+    function resetConnAndLoad() {
+      connPage = 1;
+      // Tukar warna dropdown Status Message ikut pilihan
+      const sel = document.getElementById('filterIsMessage');
+      if (sel.value === 'No') {
+        sel.className = 'text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+      } else if (sel.value === 'Yes') {
+        sel.className = 'text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+      } else {
+        sel.className = 'text-xs font-bold bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+      }
       loadConnections();
     }
 
-    function changePage(delta) {
-      currentPage += delta;
+    function changeConnPage(delta) {
+      connPage += delta;
       loadConnections();
     }
 
-    // ==========================================
-    // MUAT DATA LINKEDIN_CONNECTIONS
-    // ==========================================
     async function loadConnections() {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Memuatkan rekod...</td></tr>';
+      const tbody = document.getElementById('connTableBody');
+      tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Memuatkan rekod connections...</td></tr>';
 
-      const search = document.getElementById('searchInput').value.trim();
-      const from = (currentPage - 1) * PAGE_SIZE;
+      const teamFilter = getActiveTeamFilter();
+      const statusMsgFilter = document.getElementById('filterIsMessage').value;
+      const sortDir = document.getElementById('sortConnectedOn').value === 'asc';
+      const search = document.getElementById('searchConnInput').value.trim();
+
+      const from = (connPage - 1) * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
       let query = sb
         .from('linkedin_connections')
         .select('*', { count: 'exact' })
-        .order('connected_on', { ascending: false, nullsFirst: false })
+        .order('connected_on', { ascending: sortDir, nullsFirst: false })
         .range(from, to);
 
-      // Penapisan tambahan di UI (RLS di server tetap menguatkuasakan keselamatan)
-      if (currentProfile.role !== 'admin') {
-        query = query.eq('pic_team', currentProfile.staff_name);
-      } else {
-        const selectedTeam = document.getElementById('picTeamFilter').value;
-        if (selectedTeam !== 'ALL') {
-          query = query.eq('pic_team', selectedTeam);
-        }
+      if (teamFilter !== 'ALL') {
+        query = query.eq('pic_team', teamFilter);
+      }
+
+      if (statusMsgFilter !== 'ALL') {
+        query = query.eq('is_message', statusMsgFilter);
       }
 
       if (search) {
@@ -326,20 +669,25 @@
         return;
       }
 
-      currentRows = data || [];
-      totalRecords = count || 0;
-      document.getElementById('totalBadge').textContent = totalRecords.toLocaleString();
+      connRows = data || [];
+      connTotal = count || 0;
+      document.getElementById('badgeTabConn').textContent = connTotal.toLocaleString();
 
-      if (currentRows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Tiada rekod ditemui untuk tapisan ini.</td></tr>';
+      if (connRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Tiada rekod connections ditemui untuk tapisan ini.</td></tr>';
       } else {
-        tbody.innerHTML = currentRows.map((row, idx) => {
+        tbody.innerHTML = connRows.map((row, idx) => {
           const rowNum = from + idx + 1;
-          const createdFmt = row.created_at ? new Date(row.created_at).toLocaleDateString('ms-MY') : '-';
+          const isYes = row.is_message === 'Yes';
+          const statusBadge = isYes
+            ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Yes</span>`
+            : `<span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">No</span>`;
+
           return `
             <tr class="hover:bg-blue-50/40 transition">
               <td class="py-3 px-4 text-slate-400 font-mono">${rowNum}</td>
-              <td class="py-3 px-4">
+              <td class="py-3 px-4 whitespace-nowrap">${statusBadge}</td>
+              <td class="py-3 px-4 whitespace-nowrap">
                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
                   ${escapeHtml(row.pic_team || 'Unassigned')}
                 </span>
@@ -349,31 +697,143 @@
               <td class="py-3 px-4 max-w-xs truncate" title="${escapeHtml(row.position || '')}">${escapeHtml(row.position || '-')}</td>
               <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(row.company || '-')}</td>
               <td class="py-3 px-4 text-slate-600">${escapeHtml(row.email_address || '-')}</td>
-              <td class="py-3 px-4">
+              <td class="py-3 px-4 whitespace-nowrap">
                 <a href="${escapeHtml(row.profile_url)}" target="_blank" rel="noopener"
-                  class="text-blue-600 hover:underline font-medium inline-flex items-center gap-1">
+                  class="text-blue-600 hover:underline font-semibold inline-flex items-center gap-1">
                   LinkedIn ↗
                 </a>
               </td>
-              <td class="py-3 px-4 whitespace-nowrap font-mono text-slate-600">${escapeHtml(row.connected_on || '-')}</td>
+              <td class="py-3 px-4 whitespace-nowrap font-mono text-slate-700 font-semibold">${escapeHtml(row.connected_on || '-')}</td>
               <td class="py-3 px-4 whitespace-nowrap text-slate-500">${escapeHtml(row.pic_name || '-')}</td>
-              <td class="py-3 px-4 whitespace-nowrap text-slate-400 font-mono">${createdFmt}</td>
             </tr>
           `;
         }).join('');
       }
 
-      // Kemas kini kawalan pagination
-      const totalPages = Math.max(1, Math.ceil(totalRecords / PAGE_SIZE));
-      const startShow = totalRecords === 0 ? 0 : from + 1;
-      const endShow = Math.min(to + 1, totalRecords);
+      const totalPages = Math.max(1, Math.ceil(connTotal / PAGE_SIZE));
+      const startShow = connTotal === 0 ? 0 : from + 1;
+      const endShow = Math.min(to + 1, connTotal);
 
-      document.getElementById('pageInfo').textContent = `Memaparkan ${startShow} - ${endShow} daripada ${totalRecords.toLocaleString()} rekod`;
-      document.getElementById('pageIndicator').textContent = `Halaman ${currentPage} / ${totalPages}`;
-      document.getElementById('btnPrev').disabled = currentPage <= 1;
-      document.getElementById('btnNext').disabled = currentPage >= totalPages;
+      document.getElementById('connPageInfo').textContent = `Memaparkan ${startShow} - ${endShow} daripada ${connTotal.toLocaleString()} rekod`;
+      document.getElementById('connPageIndicator').textContent = `Halaman ${connPage} / ${totalPages}`;
+      document.getElementById('btnConnPrev').disabled = connPage <= 1;
+      document.getElementById('btnConnNext').disabled = connPage >= totalPages;
     }
 
+    // ==========================================
+    // TAB 2: INVITATIONS LISTING
+    // ==========================================
+    function debounceInvSearch() {
+      clearTimeout(invSearchTimer);
+      invSearchTimer = setTimeout(() => {
+        invPage = 1;
+        loadInvitations();
+      }, 350);
+    }
+
+    function resetInvAndLoad() {
+      invPage = 1;
+      loadInvitations();
+    }
+
+    function changeInvPage(delta) {
+      invPage += delta;
+      loadInvitations();
+    }
+
+    async function loadInvitations() {
+      const tbody = document.getElementById('invTableBody');
+      tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">Memuatkan rekod invitations...</td></tr>';
+
+      const teamFilter = getActiveTeamFilter();
+      const dirFilter = document.getElementById('filterInvDirection').value;
+      const search = document.getElementById('searchInvInput').value.trim();
+
+      const from = (invPage - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      let query = sb
+        .from('linkedin_invitations')
+        .select('*', { count: 'exact' })
+        .order('sent_at', { ascending: false, nullsFirst: false })
+        .range(from, to);
+
+      if (teamFilter !== 'ALL') {
+        query = query.eq('pic_team', teamFilter);
+      }
+
+      if (dirFilter !== 'ALL') {
+        query = query.eq('direction', dirFilter);
+      }
+
+      if (search) {
+        query = query.or(
+          `sender_name.ilike.%${search}%,recipient_name.ilike.%${search}%,message.ilike.%${search}%`
+        );
+      }
+
+      const { data, count, error } = await query;
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${error.message}</td></tr>`;
+        return;
+      }
+
+      invRows = data || [];
+      invTotal = count || 0;
+      document.getElementById('badgeTabInv').textContent = invTotal.toLocaleString();
+
+      if (invRows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">Tiada rekod invitations ditemui untuk tapisan ini.</td></tr>';
+      } else {
+        tbody.innerHTML = invRows.map((row, idx) => {
+          const rowNum = from + idx + 1;
+          const isOutgoing = (row.direction || '').toUpperCase() === 'OUTGOING';
+          const dirBadge = isOutgoing
+            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800">OUTGOING</span>`
+            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">${escapeHtml(row.direction || '-')}</span>`;
+
+          const sentFmt = row.sent_at
+            ? new Date(row.sent_at).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })
+            : '-';
+
+          return `
+            <tr class="hover:bg-blue-50/40 transition">
+              <td class="py-3 px-4 text-slate-400 font-mono">${rowNum}</td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
+                  ${escapeHtml(row.pic_team || 'Unassigned')}
+                </span>
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap">${dirBadge}</td>
+              <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(row.sender_name || '-')}</td>
+              <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtml(row.recipient_name || '-')}</td>
+              <td class="py-3 px-4 whitespace-nowrap font-mono text-slate-600">${sentFmt}</td>
+              <td class="py-3 px-4 max-w-xs truncate text-slate-600" title="${escapeHtml(row.message || '')}">${escapeHtml(row.message || '-')}</td>
+              <td class="py-3 px-4 whitespace-nowrap">
+                ${row.invitee_profile_url
+                  ? `<a href="${escapeHtml(row.invitee_profile_url)}" target="_blank" rel="noopener" class="text-blue-600 hover:underline font-semibold">Profil ↗</a>`
+                  : '-'}
+              </td>
+              <td class="py-3 px-4 whitespace-nowrap text-slate-500">${escapeHtml(row.pic_name || '-')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const totalPages = Math.max(1, Math.ceil(invTotal / PAGE_SIZE));
+      const startShow = invTotal === 0 ? 0 : from + 1;
+      const endShow = Math.min(to + 1, invTotal);
+
+      document.getElementById('invPageInfo').textContent = `Memaparkan ${startShow} - ${endShow} daripada ${invTotal.toLocaleString()} rekod`;
+      document.getElementById('invPageIndicator').textContent = `Halaman ${invPage} / ${totalPages}`;
+      document.getElementById('btnInvPrev').disabled = invPage <= 1;
+      document.getElementById('btnInvNext').disabled = invPage >= totalPages;
+    }
+
+    // ==========================================
+    // HELPER & EKSPORT CSV
+    // ==========================================
     function escapeHtml(str) {
       return String(str)
         .replace(/&/g, '&amp;')
@@ -382,18 +842,32 @@
         .replace(/"/g, '&quot;');
     }
 
-    function exportCurrentCsv() {
-      if (currentRows.length === 0) return;
-      const headers = ['id', 'pic_team', 'first_name', 'last_name', 'profile_url', 'email_address', 'company', 'position', 'connected_on', 'pic_name', 'created_at'];
+    function exportConnectionsCsv() {
+      if (connRows.length === 0) return;
+      const headers = ['id', 'is_message', 'pic_team', 'first_name', 'last_name', 'profile_url', 'email_address', 'company', 'position', 'connected_on', 'pic_name', 'created_at'];
       const csvLines = [
         headers.join(','),
-        ...currentRows.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))
+        ...connRows.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))
       ];
-      const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      downloadCsvFile(csvLines.join('\n'), `connections_${currentProfile.staff_name.replace(/\s+/g, '_')}_p${connPage}.csv`);
+    }
+
+    function exportInvitationsCsv() {
+      if (invRows.length === 0) return;
+      const headers = ['id', 'pic_team', 'direction', 'sender_name', 'recipient_name', 'sent_at', 'message', 'inviter_profile_url', 'invitee_profile_url', 'pic_name'];
+      const csvLines = [
+        headers.join(','),
+        ...invRows.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))
+      ];
+      downloadCsvFile(csvLines.join('\n'), `invitations_${currentProfile.staff_name.replace(/\s+/g, '_')}_p${invPage}.csv`);
+    }
+
+    function downloadCsvFile(content, filename) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `linkedin_${currentProfile.staff_name.replace(/\s+/g, '_')}_page${currentPage}.csv`;
+      a.download = filename;
       a.click();
     }
   </script>
