@@ -56,94 +56,96 @@
 
     <!-- Navbar -->
     <nav class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-md">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-sm">K</div>
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 flex items-center justify-center font-extrabold text-xs sm:text-sm shrink-0">K</div>
           <div>
-            <h1 class="text-base font-bold tracking-tight">LinkedIn Leads & Outreach Analytics</h1>
-            <p class="text-[11px] text-blue-200">Akses Terkawal Mengikut PIC Team</p>
+            <h1 class="text-sm sm:text-base font-bold tracking-tight leading-tight">LinkedIn Leads & Outreach Analytics</h1>
+            <p class="text-[10px] sm:text-[11px] text-blue-200">Akses Terkawal Mengikut PIC Team</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
           <!-- Dropdown Filter PIC Team (Aktif jika Admin) -->
           <div id="adminFilterWrapper" class="hidden">
             <select id="picTeamFilter" onchange="onTeamFilterChange()"
-              class="text-xs font-semibold bg-white/10 text-white border border-white/20 rounded-xl px-3.5 py-2 outline-none focus:ring-2 focus:ring-blue-400">
+              class="text-[11px] sm:text-xs font-semibold bg-white/10 text-white border border-white/20 rounded-xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-blue-400">
               <option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>
             </select>
           </div>
 
-          <div class="text-right">
-            <p id="navStaffName" class="text-xs font-bold text-white">-</p>
-            <p id="navRoleBadge" class="text-[10px] text-emerald-300 uppercase font-semibold tracking-wider">-</p>
+          <div class="flex items-center gap-2">
+            <div class="text-right">
+              <p id="navStaffName" class="text-[11px] sm:text-xs font-bold text-white leading-tight">-</p>
+              <p id="navRoleBadge" class="text-[9px] sm:text-[10px] text-emerald-300 uppercase font-semibold tracking-wider">-</p>
+            </div>
+            <button onclick="handleLogout()"
+              class="text-[11px] sm:text-xs bg-white/10 hover:bg-rose-600 border border-white/15 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl font-semibold transition cursor-pointer shrink-0">
+              Keluar
+            </button>
           </div>
-          <button onclick="handleLogout()"
-            class="text-xs bg-white/10 hover:bg-rose-600 border border-white/15 px-3.5 py-2 rounded-xl font-semibold transition cursor-pointer">
-            Log Keluar
-          </button>
         </div>
       </div>
     </nav>
 
     <!-- Kandungan Utama -->
-    <main class="max-w-7xl w-full mx-auto px-6 py-6 space-y-6 flex-1">
+    <main class="max-w-7xl w-full mx-auto px-2.5 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 flex-1">
 
       <!-- ==========================================
-           SEKSYEN ANALITIK RINGKAS (KPI CARDS)
+           SEKSYEN ANALITIK RINGKAS (2x2 COMPACT DI MOBILE)
            ========================================== -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Jumlah Connections (All)</p>
-            <p id="statTotalAll" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
-            <p class="text-[11px] text-slate-500 mt-1">Keseluruhan prospek PIC</p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400 truncate">Total (All)</p>
+            <p id="statTotalAll" class="text-lg sm:text-2xl font-extrabold text-slate-900 mt-0.5 sm:mt-1 leading-none">0</p>
+            <p class="text-[9px] sm:text-[11px] text-slate-500 mt-1 truncate">Prospek PIC</p>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-lg">👥</div>
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-extrabold text-sm sm:text-lg shrink-0">👥</div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-amber-50/40">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Belum Mesej (No)</p>
-            <p id="statTotalNo" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
-            <p class="text-[11px] text-amber-700/80 mt-1">Keutamaan tindakan DM</p>
+        <div class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-amber-200/80 shadow-sm flex items-center justify-between gap-2 bg-gradient-to-br from-white to-amber-50/40">
+          <div class="min-w-0">
+            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-700 truncate">Belum DM (No)</p>
+            <p id="statTotalNo" class="text-lg sm:text-2xl font-extrabold text-amber-600 mt-0.5 sm:mt-1 leading-none">0</p>
+            <p class="text-[9px] sm:text-[11px] text-amber-700/80 mt-1 truncate">Perlu tindakan</p>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-extrabold text-lg">⏳</div>
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center font-extrabold text-sm sm:text-lg shrink-0">⏳</div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-emerald-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-emerald-50/40">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Sudah Mesej (Yes)</p>
-            <p id="statTotalYes" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
-            <p class="text-[11px] text-emerald-700/80 mt-1">Telah dihubungi di LinkedIn</p>
+        <div class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-emerald-200/80 shadow-sm flex items-center justify-between gap-2 bg-gradient-to-br from-white to-emerald-50/40">
+          <div class="min-w-0">
+            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-700 truncate">Sudah DM (Yes)</p>
+            <p id="statTotalYes" class="text-lg sm:text-2xl font-extrabold text-emerald-600 mt-0.5 sm:mt-1 leading-none">0</p>
+            <p class="text-[9px] sm:text-[11px] text-emerald-700/80 mt-1 truncate">Telah dihubungi</p>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-extrabold text-lg">✅</div>
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-extrabold text-sm sm:text-lg shrink-0">✅</div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl border border-indigo-200/80 shadow-sm flex items-center justify-between bg-gradient-to-br from-white to-indigo-50/40">
-          <div>
-            <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Kadar Outreach</p>
-            <p id="statRate" class="text-2xl font-extrabold text-indigo-600 mt-1">0%</p>
-            <p class="text-[11px] text-indigo-700/80 mt-1">Peratusan prospek di-DM</p>
+        <div class="bg-white p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-indigo-200/80 shadow-sm flex items-center justify-between gap-2 bg-gradient-to-br from-white to-indigo-50/40">
+          <div class="min-w-0">
+            <p class="text-[9px] sm:text-[11px] font-bold uppercase tracking-wider text-indigo-700 truncate">Kadar Outreach</p>
+            <p id="statRate" class="text-lg sm:text-2xl font-extrabold text-indigo-600 mt-0.5 sm:mt-1 leading-none">0%</p>
+            <p class="text-[9px] sm:text-[11px] text-indigo-700/80 mt-1 truncate">Yes ÷ All × 100</p>
           </div>
-          <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-lg">📈</div>
+          <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-extrabold text-sm sm:text-lg shrink-0">📈</div>
         </div>
       </div>
 
       <!-- ==========================================
            BAR CHART: CONNECTED ON
            ========================================== -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+      <div class="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-3">
           <div>
-            <h2 class="text-sm font-extrabold text-slate-800">📊 Trend Tarikh Connected On</h2>
-            <p class="text-xs text-slate-500">Bilangan prospek berjaya disambung mengikut tarikh (30 tarikh terkini)</p>
+            <h2 class="text-xs sm:text-sm font-extrabold text-slate-800">📊 Trend Tarikh Connected On</h2>
+            <p class="text-[10px] sm:text-xs text-slate-500">Bilangan connections mengikut tarikh (30 tarikh terkini)</p>
           </div>
-          <span id="chartRangeLabel" class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full self-start sm:self-auto">
+          <span id="chartRangeLabel" class="text-[10px] sm:text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full self-start sm:self-auto">
             Memuatkan graf...
           </span>
         </div>
-        <div class="h-56 w-full">
+        <div class="h-44 sm:h-56 w-full">
           <canvas id="connectedChart"></canvas>
         </div>
       </div>
@@ -151,100 +153,96 @@
       <!-- ==========================================
            NAVIGASI TAB (CONNECTIONS vs INVITATIONS)
            ========================================== -->
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <!-- Tab Bar -->
-        <div class="flex items-center border-b border-slate-200 bg-slate-50/70 px-4 pt-3 gap-2">
+        <div class="flex items-center border-b border-slate-200 bg-slate-50/70 px-3 pt-2.5 gap-1.5">
           <button id="tabBtnConnections" onclick="switchTab('connections')"
-            class="px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer">
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer">
             <span>📋 Connections</span>
-            <span id="badgeTabConn" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[11px]">0</span>
+            <span id="badgeTabConn" class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full text-[10px]">0</span>
           </button>
 
           <button id="tabBtnInvitations" onclick="switchTab('invitations')"
-            class="px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer">
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer">
             <span>📨 Invitations</span>
-            <span id="badgeTabInv" class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-[11px]">0</span>
+            <span id="badgeTabInv" class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-[10px]">0</span>
           </button>
         </div>
 
         <!-- ==========================================
-             KANDUNGAN TAB 1: CONNECTIONS
+             KANDUNGAN TAB 1: CONNECTIONS (7 LAJUR COMPACT TANPA SCROLL)
              ========================================== -->
         <div id="panelConnections">
           <!-- Bar Penapis & Carian Connections -->
-          <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-white">
-            <div class="flex flex-wrap items-center gap-2.5">
+          <div class="p-3 sm:p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-white">
+            <div class="flex flex-wrap items-center gap-2">
               <!-- Dropdown Filter Status Message (Default = No) -->
-              <div class="flex items-center gap-1.5">
-                <label for="filterIsMessage" class="text-[11px] font-bold text-slate-500 uppercase">Status Message:</label>
+              <div class="flex items-center gap-1">
+                <label for="filterIsMessage" class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Status:</label>
                 <select id="filterIsMessage" onchange="resetConnAndLoad()"
-                  class="text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="No" selected>No (Belum Mesej)</option>
-                  <option value="Yes">Yes (Sudah Mesej)</option>
+                  class="text-[11px] sm:text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="No" selected>No (Belum DM)</option>
+                  <option value="Yes">Yes (Sudah DM)</option>
                   <option value="ALL">All (Semua)</option>
                 </select>
               </div>
 
               <!-- Dropdown Sort Connected On (Default = Latest) -->
-              <div class="flex items-center gap-1.5">
-                <label for="sortConnectedOn" class="text-[11px] font-bold text-slate-500 uppercase">Susun Tarikh:</label>
+              <div class="flex items-center gap-1">
+                <label for="sortConnectedOn" class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Tarikh:</label>
                 <select id="sortConnectedOn" onchange="resetConnAndLoad()"
-                  class="text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="desc" selected>Connected On: Latest → Terlama</option>
-                  <option value="asc">Connected On: Terlama → Latest</option>
+                  class="text-[11px] sm:text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="desc" selected>Latest → Lama</option>
+                  <option value="asc">Lama → Latest</option>
                 </select>
               </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2.5">
-              <input id="searchConnInput" type="text" placeholder="Cari nama, syarikat, jawatan, emel..."
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input id="searchConnInput" type="text" placeholder="Cari nama, syarikat, jawatan..."
                 onkeyup="debounceConnSearch()"
-                class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 w-64 outline-none focus:ring-2 focus:ring-blue-500" />
+                class="text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 flex-1 sm:w-56 outline-none focus:ring-2 focus:ring-blue-500" />
 
               <button onclick="exportConnectionsCsv()"
-                class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm cursor-pointer">
+                class="text-[11px] sm:text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer shrink-0">
                 ⬇ CSV
               </button>
             </div>
           </div>
 
-          <!-- Jadual Connections -->
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+          <!-- Jadual 7 Lajur Muat Skrin Mobile Tanpa Scroll Kanan -->
+          <div class="w-full">
+            <table class="w-full table-fixed sm:table-auto text-left border-collapse">
               <thead>
-                <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
-                  <th class="py-3.5 px-4">#</th>
-                  <th class="py-3.5 px-4">Status Message</th>
-                  <th class="py-3.5 px-4">PIC Team</th>
-                  <th class="py-3.5 px-4">First Name</th>
-                  <th class="py-3.5 px-4">Last Name</th>
-                  <th class="py-3.5 px-4">Position</th>
-                  <th class="py-3.5 px-4">Company</th>
-                  <th class="py-3.5 px-4">Email Address</th>
-                  <th class="py-3.5 px-4">Profile URL</th>
-                  <th class="py-3.5 px-4">Connected On</th>
-                  <th class="py-3.5 px-4">Sumber Akaun</th>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-[8px] sm:text-[11px] font-extrabold uppercase tracking-tight sm:tracking-wider text-slate-600">
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[10%] sm:w-auto text-center">Link</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[10%] sm:w-auto text-center">Msg</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[14%] sm:w-auto">PIC</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[18%] sm:w-auto">First Name</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[15%] sm:w-auto">Last Name</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[18%] sm:w-auto">Company / Pos</th>
+                  <th class="py-2 sm:py-3 px-1 sm:px-3 w-[15%] sm:w-auto text-right sm:text-left">Date</th>
                 </tr>
               </thead>
-              <tbody id="connTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+              <tbody id="connTableBody" class="divide-y divide-slate-100 text-[9.5px] sm:text-xs text-slate-700 leading-tight">
                 <tr>
-                  <td colspan="11" class="py-10 text-center text-slate-400">Memuatkan data...</td>
+                  <td colspan="7" class="py-10 text-center text-slate-400">Memuatkan data...</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Pagination Connections -->
-          <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div class="bg-slate-50 px-3 sm:px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs">
             <p id="connPageInfo" class="text-slate-500 font-medium">Memaparkan 0 - 0 daripada 0 rekod</p>
             <div class="flex items-center gap-2">
               <button id="btnConnPrev" onclick="changeConnPage(-1)" disabled
-                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                class="px-3 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
                 ← Sebelum
               </button>
-              <span id="connPageIndicator" class="font-bold text-slate-700 px-2">Halaman 1</span>
+              <span id="connPageIndicator" class="font-bold text-slate-700 px-1.5">Halaman 1</span>
               <button id="btnConnNext" onclick="changeConnPage(1)" disabled
-                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                class="px-3 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
                 Seterusnya →
               </button>
             </div>
@@ -256,66 +254,62 @@
              ========================================== -->
         <div id="panelInvitations" class="hidden">
           <!-- Bar Penapis & Carian Invitations -->
-          <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-white">
-            <div class="flex flex-wrap items-center gap-2.5">
-              <div class="flex items-center gap-1.5">
-                <label for="filterInvDirection" class="text-[11px] font-bold text-slate-500 uppercase">Direction:</label>
-                <select id="filterInvDirection" onchange="resetInvAndLoad()"
-                  class="text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="ALL" selected>Semua Direction</option>
-                  <option value="OUTGOING">OUTGOING (Dihantar)</option>
-                  <option value="INCOMING">INCOMING (Diterima)</option>
-                </select>
-              </div>
+          <div class="p-3 sm:p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-white">
+            <div class="flex items-center gap-1.5">
+              <label for="filterInvDirection" class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Direction:</label>
+              <select id="filterInvDirection" onchange="resetInvAndLoad()"
+                class="text-[11px] sm:text-xs font-semibold bg-slate-50 border border-slate-300 text-slate-700 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="ALL" selected>Semua</option>
+                <option value="OUTGOING">OUTGOING</option>
+                <option value="INCOMING">INCOMING</option>
+              </select>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2.5">
-              <input id="searchInvInput" type="text" placeholder="Cari nama penerima, pengirim, mesej..."
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+              <input id="searchInvInput" type="text" placeholder="Cari nama penerima, pengirim..."
                 onkeyup="debounceInvSearch()"
-                class="text-xs bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 w-64 outline-none focus:ring-2 focus:ring-blue-500" />
+                class="text-[11px] sm:text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 flex-1 sm:w-56 outline-none focus:ring-2 focus:ring-blue-500" />
 
               <button onclick="exportInvitationsCsv()"
-                class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl transition shadow-sm cursor-pointer">
+                class="text-[11px] sm:text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl transition shadow-sm cursor-pointer shrink-0">
                 ⬇ CSV
               </button>
             </div>
           </div>
 
-          <!-- Jadual Invitations -->
-          <div class="overflow-x-auto">
+          <!-- Jadual Invitations Compact -->
+          <div class="w-full overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead>
-                <tr class="bg-slate-100/80 border-b border-slate-200 text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
-                  <th class="py-3.5 px-4">#</th>
-                  <th class="py-3.5 px-4">PIC Team</th>
-                  <th class="py-3.5 px-4">Direction</th>
-                  <th class="py-3.5 px-4">Sender (From)</th>
-                  <th class="py-3.5 px-4">Recipient (To)</th>
-                  <th class="py-3.5 px-4">Sent At</th>
-                  <th class="py-3.5 px-4">Invitation Note</th>
-                  <th class="py-3.5 px-4">Invitee URL</th>
-                  <th class="py-3.5 px-4">Akaun LinkedIn</th>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  <th class="py-2.5 px-2 sm:px-3">Link</th>
+                  <th class="py-2.5 px-2 sm:px-3">PIC Team</th>
+                  <th class="py-2.5 px-2 sm:px-3">Dir</th>
+                  <th class="py-2.5 px-2 sm:px-3">Recipient (To)</th>
+                  <th class="py-2.5 px-2 sm:px-3">Sender (From)</th>
+                  <th class="py-2.5 px-2 sm:px-3">Sent At</th>
+                  <th class="py-2.5 px-2 sm:px-3">Note</th>
                 </tr>
               </thead>
-              <tbody id="invTableBody" class="divide-y divide-slate-100 text-xs text-slate-700">
+              <tbody id="invTableBody" class="divide-y divide-slate-100 text-[10px] sm:text-xs text-slate-700">
                 <tr>
-                  <td colspan="9" class="py-10 text-center text-slate-400">Klik tab Invitations untuk memuatkan rekod...</td>
+                  <td colspan="7" class="py-10 text-center text-slate-400">Klik tab Invitations untuk memuatkan rekod...</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <!-- Pagination Invitations -->
-          <div class="bg-slate-50 px-5 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div class="bg-slate-50 px-3 sm:px-5 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] sm:text-xs">
             <p id="invPageInfo" class="text-slate-500 font-medium">Memaparkan 0 - 0 daripada 0 rekod</p>
             <div class="flex items-center gap-2">
               <button id="btnInvPrev" onclick="changeInvPage(-1)" disabled
-                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                class="px-3 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
                 ← Sebelum
               </button>
-              <span id="invPageIndicator" class="font-bold text-slate-700 px-2">Halaman 1</span>
+              <span id="invPageIndicator" class="font-bold text-slate-700 px-1.5">Halaman 1</span>
               <button id="btnInvNext" onclick="changeInvPage(1)" disabled
-                class="px-3.5 py-1.5 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+                class="px-3 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
                 Seterusnya →
               </button>
             </div>
@@ -339,19 +333,16 @@
     let activeTab = 'connections';
     const PAGE_SIZE = 50;
 
-    // State Tab Connections
     let connPage = 1;
     let connTotal = 0;
     let connRows = [];
     let connSearchTimer = null;
 
-    // State Tab Invitations
     let invPage = 1;
     let invTotal = 0;
     let invRows = [];
     let invSearchTimer = null;
 
-    // Chart instance
     let connectedChartInstance = null;
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -419,7 +410,7 @@
 
       document.getElementById('navStaffName').textContent = profile.staff_name;
       document.getElementById('navRoleBadge').textContent =
-        profile.role === 'admin' ? 'ADMIN • SEMUA AKSES' : `STAF • FILTER: ${profile.staff_name}`;
+        profile.role === 'admin' ? 'ADMIN • ALL' : `STAF • ${profile.staff_name}`;
 
       if (profile.role === 'admin') {
         document.getElementById('adminFilterWrapper').classList.remove('hidden');
@@ -438,7 +429,7 @@
       if (data) {
         const uniqueTeams = [...new Set(data.map(r => r.pic_team))].sort();
         const select = document.getElementById('picTeamFilter');
-        select.innerHTML = '<option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>';
+        select.innerHTML = '<option value="ALL" class="text-slate-900">Semua PIC Team</option>';
         uniqueTeams.forEach(team => {
           const opt = document.createElement('option');
           opt.value = team;
@@ -469,12 +460,11 @@
     }
 
     // ==========================================
-    // ANALITIK KPI (Yes / No / All) & BAR CHART CONNECTED ON
+    // ANALITIK KPI & BAR CHART CONNECTED ON
     // ==========================================
     async function loadAnalyticsAndChart() {
       const teamFilter = getActiveTeamFilter();
 
-      // 1. Kira jumlah All, No, Yes secara tepat menggunakan count:'exact'
       const buildCountQuery = (msgStatus) => {
         let q = sb.from('linkedin_connections').select('*', { count: 'exact', head: true });
         if (teamFilter !== 'ALL') q = q.eq('pic_team', teamFilter);
@@ -498,7 +488,6 @@
       document.getElementById('statTotalYes').textContent = countYes.toLocaleString();
       document.getElementById('statRate').textContent = `${rate}%`;
 
-      // 2. Tarik tarikh connected_on untuk bina Bar Chart
       let dateQuery = sb
         .from('linkedin_connections')
         .select('connected_on')
@@ -521,14 +510,13 @@
         countsByDate[r.connected_on] = (countsByDate[r.connected_on] || 0) + 1;
       });
 
-      // Susun tarikh menaik & ambil 30 tarikh terkini supaya bar chart jelas dibaca
       const sortedDates = Object.keys(countsByDate).sort();
       const recentDates = sortedDates.slice(-30);
       const values = recentDates.map(d => countsByDate[d]);
 
       const labelEl = document.getElementById('chartRangeLabel');
       if (recentDates.length > 0) {
-        labelEl.textContent = `${recentDates[0]} hingga ${recentDates[recentDates.length - 1]}`;
+        labelEl.textContent = `${recentDates[0]} → ${recentDates[recentDates.length - 1]}`;
       } else {
         labelEl.textContent = 'Tiada data tarikh';
       }
@@ -543,12 +531,12 @@
         data: {
           labels: recentDates,
           datasets: [{
-            label: 'Jumlah Connections',
+            label: 'Connections',
             data: values,
             backgroundColor: 'rgba(37, 99, 235, 0.85)',
             hoverBackgroundColor: 'rgba(29, 78, 216, 1)',
-            borderRadius: 6,
-            maxBarThickness: 28
+            borderRadius: 5,
+            maxBarThickness: 24
           }]
         },
         options: {
@@ -565,11 +553,11 @@
           scales: {
             x: {
               grid: { display: false },
-              ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 0 }
+              ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 0 }
             },
             y: {
               beginAtZero: true,
-              ticks: { precision: 0, font: { size: 10 } },
+              ticks: { precision: 0, font: { size: 9 } },
               grid: { color: '#f1f5f9' }
             }
           }
@@ -578,7 +566,7 @@
     }
 
     // ==========================================
-    // PENUKARAN TAB (CONNECTIONS vs INVITATIONS)
+    // PENUKARAN TAB
     // ==========================================
     function switchTab(tabName) {
       activeTab = tabName;
@@ -588,20 +576,20 @@
       const panelInv = document.getElementById('panelInvitations');
 
       if (tabName === 'connections') {
-        btnConn.className = 'px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer';
-        btnInv.className = 'px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer';
+        btnConn.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer';
+        btnInv.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
         panelConn.classList.remove('hidden');
         panelInv.classList.add('hidden');
       } else {
-        btnInv.className = 'px-4 py-2.5 text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-2 cursor-pointer';
-        btnConn.className = 'px-4 py-2.5 text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-2 cursor-pointer';
+        btnInv.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer';
+        btnConn.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
         panelInv.classList.remove('hidden');
         panelConn.classList.add('hidden');
       }
     }
 
     // ==========================================
-    // TAB 1: CONNECTIONS LISTING
+    // TAB 1: CONNECTIONS LISTING (7 LAJUR COMPACT)
     // ==========================================
     function debounceConnSearch() {
       clearTimeout(connSearchTimer);
@@ -613,14 +601,13 @@
 
     function resetConnAndLoad() {
       connPage = 1;
-      // Tukar warna dropdown Status Message ikut pilihan
       const sel = document.getElementById('filterIsMessage');
       if (sel.value === 'No') {
-        sel.className = 'text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+        sel.className = 'text-[11px] sm:text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500';
       } else if (sel.value === 'Yes') {
-        sel.className = 'text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+        sel.className = 'text-[11px] sm:text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500';
       } else {
-        sel.className = 'text-xs font-bold bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500';
+        sel.className = 'text-[11px] sm:text-xs font-bold bg-slate-50 border border-slate-300 text-slate-800 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500';
       }
       loadConnections();
     }
@@ -630,9 +617,17 @@
       loadConnections();
     }
 
+    function formatShortDate(dateStr) {
+      if (!dateStr) return '-';
+      // Tukar "2026-11-12" -> "12/11/26" supaya ringkas di mobile
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
+    }
+
     async function loadConnections() {
       const tbody = document.getElementById('connTableBody');
-      tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Memuatkan rekod connections...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-400">Memuatkan rekod connections...</td></tr>';
 
       const teamFilter = getActiveTeamFilter();
       const statusMsgFilter = document.getElementById('filterIsMessage').value;
@@ -665,7 +660,7 @@
       const { data, count, error } = await query;
 
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${error.message}</td></tr>`;
         return;
       }
 
@@ -674,37 +669,33 @@
       document.getElementById('badgeTabConn').textContent = connTotal.toLocaleString();
 
       if (connRows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" class="py-10 text-center text-slate-400">Tiada rekod connections ditemui untuk tapisan ini.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-400">Tiada rekod connections ditemui.</td></tr>';
       } else {
-        tbody.innerHTML = connRows.map((row, idx) => {
-          const rowNum = from + idx + 1;
+        tbody.innerHTML = connRows.map((row) => {
           const isYes = row.is_message === 'Yes';
           const statusBadge = isYes
-            ? `<span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Yes</span>`
-            : `<span class="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">No</span>`;
+            ? `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Yes</span>`
+            : `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">No</span>`;
+
+          const picShort = (row.pic_team || '-').replace(' KOL', '');
+          const companyPos = [row.company, row.position].filter(Boolean).join(' • ') || '-';
 
           return `
             <tr class="hover:bg-blue-50/40 transition">
-              <td class="py-3 px-4 text-slate-400 font-mono">${rowNum}</td>
-              <td class="py-3 px-4 whitespace-nowrap">${statusBadge}</td>
-              <td class="py-3 px-4 whitespace-nowrap">
-                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-                  ${escapeHtml(row.pic_team || 'Unassigned')}
-                </span>
-              </td>
-              <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtml(row.first_name || '-')}</td>
-              <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtml(row.last_name || '-')}</td>
-              <td class="py-3 px-4 max-w-xs truncate" title="${escapeHtml(row.position || '')}">${escapeHtml(row.position || '-')}</td>
-              <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(row.company || '-')}</td>
-              <td class="py-3 px-4 text-slate-600">${escapeHtml(row.email_address || '-')}</td>
-              <td class="py-3 px-4 whitespace-nowrap">
+              <td class="py-2 sm:py-3 px-1 sm:px-3 text-center">
                 <a href="${escapeHtml(row.profile_url)}" target="_blank" rel="noopener"
-                  class="text-blue-600 hover:underline font-semibold inline-flex items-center gap-1">
-                  LinkedIn ↗
+                  class="inline-flex items-center justify-center px-1.5 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[8.5px] sm:text-[11px]">
+                  in ↗
                 </a>
               </td>
-              <td class="py-3 px-4 whitespace-nowrap font-mono text-slate-700 font-semibold">${escapeHtml(row.connected_on || '-')}</td>
-              <td class="py-3 px-4 whitespace-nowrap text-slate-500">${escapeHtml(row.pic_name || '-')}</td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 text-center">${statusBadge}</td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 truncate" title="${escapeHtml(row.pic_team || '')}">
+                <span class="text-[8.5px] sm:text-[11px] font-bold text-indigo-700">${escapeHtml(picShort)}</span>
+              </td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 font-semibold text-slate-900 break-words">${escapeHtml(row.first_name || '-')}</td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 font-semibold text-slate-900 break-words">${escapeHtml(row.last_name || '-')}</td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 truncate text-slate-600" title="${escapeHtml(companyPos)}">${escapeHtml(companyPos)}</td>
+              <td class="py-2 sm:py-3 px-1 sm:px-3 text-right sm:text-left font-mono text-[8.5px] sm:text-xs text-slate-600">${formatShortDate(row.connected_on)}</td>
             </tr>
           `;
         }).join('');
@@ -721,7 +712,7 @@
     }
 
     // ==========================================
-    // TAB 2: INVITATIONS LISTING
+    // TAB 2: INVITATIONS LISTING (LINK DI LAJUR 1)
     // ==========================================
     function debounceInvSearch() {
       clearTimeout(invSearchTimer);
@@ -743,7 +734,7 @@
 
     async function loadInvitations() {
       const tbody = document.getElementById('invTableBody');
-      tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">Memuatkan rekod invitations...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-400">Memuatkan rekod invitations...</td></tr>';
 
       const teamFilter = getActiveTeamFilter();
       const dirFilter = document.getElementById('filterInvDirection').value;
@@ -775,7 +766,7 @@
       const { data, count, error } = await query;
 
       if (error) {
-        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${error.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${error.message}</td></tr>`;
         return;
       }
 
@@ -784,38 +775,31 @@
       document.getElementById('badgeTabInv').textContent = invTotal.toLocaleString();
 
       if (invRows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="py-10 text-center text-slate-400">Tiada rekod invitations ditemui untuk tapisan ini.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-400">Tiada rekod invitations ditemui.</td></tr>';
       } else {
-        tbody.innerHTML = invRows.map((row, idx) => {
-          const rowNum = from + idx + 1;
+        tbody.innerHTML = invRows.map((row) => {
           const isOutgoing = (row.direction || '').toUpperCase() === 'OUTGOING';
           const dirBadge = isOutgoing
-            ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800">OUTGOING</span>`
-            : `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">${escapeHtml(row.direction || '-')}</span>`;
+            ? `<span class="px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[10px] font-extrabold bg-blue-100 text-blue-800">OUT</span>`
+            : `<span class="px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[10px] font-extrabold bg-purple-100 text-purple-800">IN</span>`;
 
           const sentFmt = row.sent_at
-            ? new Date(row.sent_at).toLocaleString('ms-MY', { dateStyle: 'medium', timeStyle: 'short' })
+            ? new Date(row.sent_at).toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: '2-digit' })
             : '-';
 
           return `
             <tr class="hover:bg-blue-50/40 transition">
-              <td class="py-3 px-4 text-slate-400 font-mono">${rowNum}</td>
-              <td class="py-3 px-4 whitespace-nowrap">
-                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/70">
-                  ${escapeHtml(row.pic_team || 'Unassigned')}
-                </span>
-              </td>
-              <td class="py-3 px-4 whitespace-nowrap">${dirBadge}</td>
-              <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(row.sender_name || '-')}</td>
-              <td class="py-3 px-4 font-semibold text-slate-900">${escapeHtml(row.recipient_name || '-')}</td>
-              <td class="py-3 px-4 whitespace-nowrap font-mono text-slate-600">${sentFmt}</td>
-              <td class="py-3 px-4 max-w-xs truncate text-slate-600" title="${escapeHtml(row.message || '')}">${escapeHtml(row.message || '-')}</td>
-              <td class="py-3 px-4 whitespace-nowrap">
+              <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap">
                 ${row.invitee_profile_url
-                  ? `<a href="${escapeHtml(row.invitee_profile_url)}" target="_blank" rel="noopener" class="text-blue-600 hover:underline font-semibold">Profil ↗</a>`
+                  ? `<a href="${escapeHtml(row.invitee_profile_url)}" target="_blank" rel="noopener" class="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[8.5px] sm:text-[11px]">in ↗</a>`
                   : '-'}
               </td>
-              <td class="py-3 px-4 whitespace-nowrap text-slate-500">${escapeHtml(row.pic_name || '-')}</td>
+              <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap font-bold text-indigo-700">${escapeHtml(row.pic_team || '-')}</td>
+              <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap">${dirBadge}</td>
+              <td class="py-2.5 px-2 sm:px-3 font-semibold text-slate-900">${escapeHtml(row.recipient_name || '-')}</td>
+              <td class="py-2.5 px-2 sm:px-3 text-slate-700">${escapeHtml(row.sender_name || '-')}</td>
+              <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap font-mono text-slate-600">${sentFmt}</td>
+              <td class="py-2.5 px-2 sm:px-3 max-w-[140px] sm:max-w-xs truncate text-slate-600" title="${escapeHtml(row.message || '')}">${escapeHtml(row.message || '-')}</td>
             </tr>
           `;
         }).join('');
@@ -844,7 +828,7 @@
 
     function exportConnectionsCsv() {
       if (connRows.length === 0) return;
-      const headers = ['id', 'is_message', 'pic_team', 'first_name', 'last_name', 'profile_url', 'email_address', 'company', 'position', 'connected_on', 'pic_name', 'created_at'];
+      const headers = ['profile_url', 'is_message', 'pic_team', 'first_name', 'last_name', 'company', 'position', 'email_address', 'connected_on', 'pic_name', 'created_at'];
       const csvLines = [
         headers.join(','),
         ...connRows.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))
@@ -854,7 +838,7 @@
 
     function exportInvitationsCsv() {
       if (invRows.length === 0) return;
-      const headers = ['id', 'pic_team', 'direction', 'sender_name', 'recipient_name', 'sent_at', 'message', 'inviter_profile_url', 'invitee_profile_url', 'pic_name'];
+      const headers = ['invitee_profile_url', 'pic_team', 'direction', 'recipient_name', 'sender_name', 'sent_at', 'message', 'inviter_profile_url', 'pic_name'];
       const csvLines = [
         headers.join(','),
         ...invRows.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','))
