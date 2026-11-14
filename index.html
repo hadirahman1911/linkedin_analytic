@@ -29,9 +29,9 @@
 
       <form id="loginForm" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Emel Staf</label>
-          <input id="loginEmail" type="email" required placeholder="nama@kunkwan.com"
-            class="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none" />
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Kunkwan ID / Emel</label>
+          <input id="loginEmail" type="text" required placeholder="Contoh: dayana / farah"
+            class="w-full px-4 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none lowercase" />
         </div>
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Kata Laluan</label>
@@ -66,14 +66,19 @@
         </div>
 
         <div class="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-          <!-- Dropdown Filter PIC Team (Aktif jika Admin) -->
-          <div id="adminFilterWrapper" class="hidden">
+          <!-- Kawalan Admin Sahaja (Filter PIC Team + Butang Tambah Staf) -->
+          <div id="adminFilterWrapper" class="hidden flex items-center gap-1.5 sm:gap-2">
             <select id="picTeamFilter" onchange="onTeamFilterChange()"
               class="text-[11px] sm:text-xs font-semibold bg-white/10 text-white border border-white/20 rounded-xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-blue-400">
               <option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>
             </select>
-          </div>
 
+            <button onclick="openAddStaffModal()"
+              class="text-[11px] sm:text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl shadow-sm transition cursor-pointer shrink-0">
+              + Staf
+            </button>
+          </div>
+        
           <div class="flex items-center gap-2">
             <div class="text-right">
               <p id="navStaffName" class="text-[11px] sm:text-xs font-bold text-white leading-tight">-</p>
@@ -318,6 +323,62 @@
 
       </div>
 
+      <!-- ==========================================
+           MODAL TAMBAH STAF BAHARU (KHAS ADMIN)
+           ========================================== -->
+      <div id="addStaffModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900">➕ Daftar Akaun Staf Baharu</h3>
+              <p class="text-[11px] text-slate-500">Auto-paut terus ke <code class="text-blue-600 font-bold">pic_team</code></p>
+            </div>
+            <button onclick="closeAddStaffModal()" class="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer">✕</button>
+          </div>
+
+          <form id="addStaffForm" class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Staff Name (Mesti Sama Dgn Sheet / pic_team)</label>
+              <input id="newStaffName" type="text" required placeholder="Contoh: Dayana / Farah KOL / Mimie"
+                class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Kunkwan ID Login (Tanpa jarak)</label>
+              <input id="newStaffEmail" type="text" required placeholder="Contoh: dayana / mimie"
+                class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 lowercase" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Kata Laluan (Minimum 6 aksara)</label>
+              <input id="newStaffPassword" type="text" required minlength="6" placeholder="Contoh: Kunkwan2026!"
+                class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Peranan (Role)</label>
+              <select id="newStaffRole" class="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="staff" selected>Staff (Nampak data pic_team sendiri sahaja)</option>
+                <option value="admin">Admin (Nampak semua data & boleh tambah staf)</option>
+              </select>
+            </div>
+
+            <div id="addStaffFeedback" class="hidden text-xs p-3 rounded-xl font-medium"></div>
+
+            <div class="flex justify-end gap-2 pt-2">
+              <button type="button" onclick="closeAddStaffModal()"
+                class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">
+                Batal
+              </button>
+              <button id="btnSaveStaff" type="submit"
+                class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm cursor-pointer">
+                Cipta Akaun Staf
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -345,6 +406,12 @@
 
     let connectedChartInstance = null;
 
+    // Auto-tukar Kunkwan ID ("dayana") -> "dayana@kunkwan.local" (jika sudah ada '@', kekalkan)
+    function formatLoginIdentifier(input) {
+      const clean = input.trim().toLowerCase().replace(/\s+/g, '');
+      return clean.includes('@') ? clean : `${clean}@kunkwan.local`;
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await sb.auth.getSession();
       if (session) {
@@ -357,7 +424,8 @@
     // ==========================================
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
+      const rawId = document.getElementById('loginEmail').value;
+      const email = formatLoginIdentifier(rawId);
       const password = document.getElementById('loginPassword').value;
       const errBox = document.getElementById('loginError');
       const btn = document.getElementById('btnLogin');
@@ -619,7 +687,6 @@
 
     function formatShortDate(dateStr) {
       if (!dateStr) return '-';
-      // Tukar "2026-11-12" -> "12/11/26" supaya ringkas di mobile
       const parts = dateStr.split('-');
       if (parts.length !== 3) return dateStr;
       return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
@@ -854,6 +921,69 @@
       a.download = filename;
       a.click();
     }
+
+    // ==========================================
+    // FUNGSI MODAL TAMBAH STAF (TANPA LOGOUT SESI ADMIN)
+    // ==========================================
+    function openAddStaffModal() {
+      if (!currentProfile || currentProfile.role !== 'admin') return;
+      document.getElementById('addStaffForm').reset();
+      document.getElementById('addStaffFeedback').classList.add('hidden');
+      document.getElementById('addStaffModal').classList.remove('hidden');
+    }
+
+    function closeAddStaffModal() {
+      document.getElementById('addStaffModal').classList.add('hidden');
+    }
+
+    document.getElementById('addStaffForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentProfile || currentProfile.role !== 'admin') return;
+
+      const staffName = document.getElementById('newStaffName').value.trim();
+      const rawStaffId = document.getElementById('newStaffEmail').value;
+      const email = formatLoginIdentifier(rawStaffId);
+      const password = document.getElementById('newStaffPassword').value;
+      const role = document.getElementById('newStaffRole').value;
+
+      const btn = document.getElementById('btnSaveStaff');
+      const fb = document.getElementById('addStaffFeedback');
+
+      btn.disabled = true;
+      btn.textContent = 'Mencipta akaun...';
+      fb.classList.add('hidden');
+
+      try {
+        // Cipta client sementara supaya sesi login Admin semasa TIDAK terganggu
+        const tempSb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false, autoRefreshToken: false }
+        });
+
+        const { data, error } = await tempSb.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { staff_name: staffName, role: role }
+          }
+        });
+
+        if (error) throw error;
+
+        fb.className = 'text-xs p-3 rounded-xl font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200';
+        fb.innerHTML = `✓ Akaun <b>${escapeHtml(staffName)}</b> (ID: <b>${escapeHtml(rawStaffId.trim().toLowerCase())}</b>) berjaya dicipta! Staf boleh terus log masuk sekarang.`;
+        fb.classList.remove('hidden');
+
+        document.getElementById('addStaffForm').reset();
+        await loadAdminTeamDropdown();
+      } catch (err) {
+        fb.className = 'text-xs p-3 rounded-xl font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+        fb.textContent = `Ralat: ${err.message}`;
+        fb.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cipta Akaun Staf';
+      }
+    });
   </script>
 </body>
 </html>
