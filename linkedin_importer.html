@@ -608,7 +608,7 @@
     // 6. TOLAK KE SUPABASE (BATCH UPSERT)
     // ==========================================
     async function batchUpsert(tableName, records, conflictCols) {
-      const BATCH_SIZE = 500;
+      const BATCH_SIZE = 100;
       let totalInserted = 0;
       for (let i = 0; i < records.length; i += BATCH_SIZE) {
         const batch = records.slice(i, i + BATCH_SIZE);
