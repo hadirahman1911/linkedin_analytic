@@ -101,6 +101,9 @@
           <span id="detectedPicBadge" class="hidden px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[11px] font-bold">
             PIC: -
           </span>
+          <span id="syncedDataBadge" class="hidden px-2.5 py-0.5 bg-purple-100 text-purple-800 rounded-full text-[11px] font-bold">
+              Synced Data: -
+            </span>
         </div>
         
         <!-- Terminal Log -->
@@ -445,12 +448,32 @@
           const arrayBuffer = await dlRes.arrayBuffer();
           const zip = await JSZip.loadAsync(arrayBuffer);
           const fileMap = {};
+          let exportDateObj = null;
+
           zip.forEach((relativePath, zipEntry) => {
             if (!zipEntry.dir) {
               const baseName = relativePath.split('/').pop().toLowerCase();
               fileMap[baseName] = zipEntry;
+
+              // Ambil tarikh daripada Connections.csv atau mana-mana CSV utama
+              if (baseName === 'connections.csv' || (!exportDateObj && baseName.endsWith('.csv'))) {
+                exportDateObj = zipEntry.date;
+              }
             }
           });
+
+          // Formatkan tarikh ke waktu Malaysia (contoh: 14/11/2026 3:04 PTG)
+          const syncedDataLabel = exportDateObj
+            ? exportDateObj.toLocaleString('ms-MY', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+              })
+            : 'Tidak Diketahui';
+
+          const syncBadge = document.getElementById('syncedDataBadge');
+          syncBadge.textContent = `Synced Data: ${syncedDataLabel}`;
+          syncBadge.classList.remove('hidden');
+          addLog(`📅 Tarikh Eksport LinkedIn (Synced Data): ${syncedDataLabel}`, "system");
 
           // LANGKAH A: BACA INVITATIONS.CSV DAHULU UNTUK KESAN PIC (Direction = "OUTGOING")
           let picName = "Unknown";
@@ -529,7 +552,8 @@
                 email_address: getCol(row, ['Email Address']),
                 company: fixMojibake(getCol(row, ['Company'])),
                 position: fixMojibake(getCol(row, ['Position'])),
-                connected_on: parseConnectionDate(getCol(row, ['Connected On', 'Connected Date']))
+                connected_on: parseConnectionDate(getCol(row, ['Connected On', 'Connected Date'])),
+                synced_at: exportDateObj ? exportDateObj.toISOString() : null // <-- Tambah baris ini
               });
             });
             addLog(`✓ Connections.csv [${picName}]: ${mapConn.size} rekod unik.`);
@@ -605,23 +629,27 @@
     }
 
     // ==========================================
-    // 6. TOLAK KE SUPABASE (BATCH UPSERT)
+    // 6. TOLAK KE SUPABASE (BATCH INSERT)
     // ==========================================
-    async function batchUpsert(tableName, records, conflictCols) {
-      const BATCH_SIZE = 100;
-      let totalInserted = 0;
-      for (let i = 0; i < records.length; i += BATCH_SIZE) {
-        const batch = records.slice(i, i + BATCH_SIZE);
+    // 1. Tambah fungsi batchInsert ini (untuk gantikan batchUpsert lama)
+    async function batchInsert(tableName, dataArray) {
+      const BATCH_SIZE = 2000; // Saiz batch besar sebab staging sangat laju!
+      
+      for (let i = 0; i < dataArray.length; i += BATCH_SIZE) {
+        const chunk = dataArray.slice(i, i + BATCH_SIZE);
+        
+        // Guna supabaseClient.from(), bukan supabase.from()
         const { error } = await supabaseClient
           .from(tableName)
-          .upsert(batch, { onConflict: conflictCols });
-
-        if (error) throw new Error(`[${tableName}] ${error.message}`);
-        totalInserted += batch.length;
-        addLog(`✓ ${tableName}: ${totalInserted}/${records.length} rekod disimpan.`);
+          .insert(chunk);
+          
+        if (error) throw error;
+        
+        addLog(`✓ ${tableName}: ${Math.min(i + BATCH_SIZE, dataArray.length)}/${dataArray.length} rekod dipindahkan ke staging.`, "system");
       }
     }
 
+    // 2. Ini fungsi pushToSupabase kau yang telah dikemas kini
     async function pushToSupabase() {
       if (!isSbAuthenticated) {
         alert('Sila log masuk akaun Admin Supabase di bahagian atas terlebih dahulu sebelum menolak data.');
@@ -629,21 +657,24 @@
       }
 
       document.getElementById('pushBtn').disabled = true;
-      addLog("Memulakan penghantaran ke 3 jadual Supabase...", "system");
+      addLog("Memulakan penghantaran pantas ke jadual Staging...", "system");
 
       try {
+        // Tukar nama jadual ke staging_... dan guna batchInsert (tanpa kunci conflict)
         if (parsedData.connections.length > 0) {
-          await batchUpsert('linkedin_connections', parsedData.connections, 'pic_name,profile_url');
+          await batchInsert('staging_linkedin_connections', parsedData.connections);
         }
         if (parsedData.invitations.length > 0) {
-          await batchUpsert('linkedin_invitations', parsedData.invitations, 'inviter_profile_url,invitee_profile_url,sent_at');
+          await batchInsert('staging_linkedin_invitations', parsedData.invitations);
         }
         if (parsedData.messages.length > 0) {
-          await batchUpsert('linkedin_messages', parsedData.messages, 'conversation_id,sender_profile_url,sent_at');
+          await batchInsert('staging_linkedin_messages', parsedData.messages);
         }
 
-        addLog("PROSES SELESAI! Semua data LinkedIn berjaya disimpan mengikut PIC.", "system");
-        document.getElementById('pushBtn').innerHTML = "✓ Semua Data Berjaya Disimpan!";
+        addLog("PROSES SELESAI! Semua data telah dipindahkan ke jadual transit.", "system");
+        addLog("Sistem pangkalan data akan mula menyusun data ke dalam jadual sebenar sebentar lagi secara automatik.", "system");
+        
+        document.getElementById('pushBtn').innerHTML = "✓ Semua Data Dihantar ke Transit!";
         document.getElementById('pushBtn').classList.replace('bg-emerald-500', 'bg-blue-600');
 
       } catch (err) {
