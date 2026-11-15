@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn ZIP ➔ Supabase Importer (Admin Auth + Auto PIC)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Drive API -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <!-- JSZip & PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style> 
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .scrollbar-thin::-webkit-scrollbar { width: 5px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    
+    .checkbox-custom {
+      appearance: none; width: 1.1rem; height: 1.1rem; border: 2px solid #94a3b8; border-radius: 4px; outline: none; cursor: pointer; position: relative; transition: all 0.2s; flex-shrink: 0;
+    }
+    .checkbox-custom:checked { background-color: #2563eb; border-color: #2563eb; }
+    .checkbox-custom:checked::after {
+      content: ''; position: absolute; left: 5px; top: 1px; width: 5px; height: 10px; border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-6">
+
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Header + Bar Login Admin Supabase -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-800 tracking-tight">LinkedIn ZIP Importer (Drive ➔ Supabase)</h1>
+          <p class="text-sm text-slate-500 mt-1">Auto-kesan <b>PIC (sender_name OUTGOING)</b> & muat naik ke <b>Connections</b>, <b>Invitations</b> & <b>Messages</b></p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <span id="gdriveStatus" class="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs font-bold border border-slate-200">Drive: Terputus</span>
+          <span id="supabaseStatus" class="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-bold border border-amber-200">Supabase: Belum Login</span>
+        </div>
+      </div>
+
+      <!-- Borang Login Ringkas Admin Supabase (Menembusi RLS dengan Selamat) -->
+      <div id="sbLoginBar" class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-2.5">
+        <span class="text-xs font-bold text-slate-600 shrink-0">🔐 Login Admin Supabase:</span>
+        <input id="sbEmail" type="email" placeholder="Emel Admin (cth: hadi@kunkwan.com)" class="w-full sm:w-64 px-3 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="sbPassword" type="password" placeholder="Kata Laluan" class="w-full sm:w-48 px-3 py-2 text-xs border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+        <button id="sbLoginBtn" onclick="loginSupabaseAdmin()" class="w-full sm:w-auto px-4 py-2 bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0">
+          Sahkan Sesi
+        </button>
+      </div>
+
+      <!-- Paparan Jika Sudah Login -->
+      <div id="sbLoggedInBar" class="hidden pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <p class="text-emerald-700 font-semibold">✓ Sesi Admin Aktif: <span id="sbUserEmail" class="font-bold"></span> (Akses RLS Disahkan)</p>
+        <button onclick="logoutSupabaseAdmin()" class="text-rose-600 hover:underline font-bold cursor-pointer">Log Keluar</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Panel Kiri: Sumber Google Drive -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+        
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Langkah 1: Sumber Google Drive (.zip)</h2>
+        
+        <button id="authBtn" onclick="handleAuthClick()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-sm">
+          1. Sambung Akaun Google
+        </button>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col flex-1 max-h-56">
+          <div class="flex justify-between items-center mb-2">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">2. Pilih Fail ZIP LinkedIn (Boleh Multi-Select)</p>
+            <button onclick="loadZipFiles()" class="text-[10px] text-blue-600 hover:underline font-bold">↻ Refresh</button>
+          </div>
+          <div id="fileContainer" class="flex-1 overflow-y-auto scrollbar-thin space-y-1.5">
+            <p class="text-xs text-slate-400 italic">Menunggu sambungan Drive...</p>
+          </div>
+        </div>
+
+        <button id="fetchBtn" onclick="startZipExtraction()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition-all shadow-sm disabled:opacity-50" disabled>
+          3. Tarik & Ekstrak ZIP ke Pelayar
+        </button>
+
+      </div>
+
+      <!-- Panel Kanan: Status & Hantar -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+        
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Langkah 2: Proses & Tolak ke Supabase</h2>
+          <span id="detectedPicBadge" class="hidden px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-[11px] font-bold">
+            PIC: -
+          </span>
+        </div>
+        
+        <!-- Terminal Log -->
+        <div class="bg-slate-950 rounded-xl p-4 flex-1 overflow-y-auto scrollbar-thin max-h-52 font-mono text-[10px] text-emerald-400 shadow-inner flex flex-col gap-1" id="terminalLog">
+          <p class="text-slate-500">// Terminal Log Sistem (Auto-Detect PIC via OUTGOING Invitations)...</p>
+        </div>
+
+        <!-- Ringkasan 3 Jadual -->
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-blue-50/70 p-2.5 rounded-xl border border-blue-200/70 text-center">
+            <p class="text-[10px] font-bold text-blue-700 uppercase">Connections</p>
+            <p id="countConn" class="text-lg font-black text-slate-800">0</p>
+          </div>
+          <div class="bg-sky-50/70 p-2.5 rounded-xl border border-sky-200/70 text-center">
+            <p class="text-[10px] font-bold text-sky-700 uppercase">Invitations</p>
+            <p id="countInv" class="text-lg font-black text-slate-800">0</p>
+          </div>
+          <div class="bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-200/70 text-center">
+            <p class="text-[10px] font-bold text-indigo-700 uppercase">Messages ✨</p>
+            <p id="countMsg" class="text-lg font-black text-slate-800">0</p>
+          </div>
+        </div>
+
+        <button id="pushBtn" onclick="pushToSupabase()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition-all shadow-sm shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-50" disabled>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+          4. Tolak Semua ke Supabase (Upsert)
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Kotak Pratonton Emoji Mesej -->
+    <div id="emojiPreviewBox" class="hidden bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">✨ Pratonton Mesej (Pengesahan Emoji UTF-8 Dibaiki)</span>
+        <span id="previewMeta" class="text-xs font-semibold text-slate-500"></span>
+      </div>
+      <pre id="emojiPreviewText" class="text-xs text-slate-700 whitespace-pre-wrap font-sans leading-relaxed max-h-36 overflow-y-auto bg-slate-50 p-3.5 rounded-xl border border-slate-200"></pre>
+    </div>
+
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. TETAPAN KUNCI API
+    // ==========================================
+    const CLIENT_ID = '1049870928195-867cggbs03to780lhoe6m9ujdrn1c6n7.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
+    
+    const SUPABASE_URL = 'https://rfbnlxbitigxnntwmbvp.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_XWzxntAQWXWgZkLc2OzTFQ_B_U9OXt0';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let tokenClient;
+    let accessToken = null;
+    let isSbAuthenticated = false;
+    let parsedData = {
+      connections: [],
+      invitations: [],
+      messages: []
+    };
+
+    function addLog(msg, type = 'info') {
+      const terminal = document.getElementById('terminalLog');
+      const p = document.createElement('p');
+      let colorClass = 'text-emerald-400';
+      if (type === 'error') colorClass = 'text-rose-400 font-bold';
+      if (type === 'warn') colorClass = 'text-amber-400';
+      if (type === 'system') colorClass = 'text-blue-400';
+      
+      p.className = colorClass;
+      p.innerHTML = `<span class="text-slate-600">[${new Date().toLocaleTimeString('ms-MY')}]</span> ${msg}`;
+      terminal.appendChild(p);
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    // ==========================================
+    // 2. LOGIK SUPABASE ADMIN AUTH
+    // ==========================================
+    async function checkSupabaseSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        setSbLoggedInState(session.user.email);
+      }
+    }
+
+    function setSbLoggedInState(email) {
+      isSbAuthenticated = true;
+      document.getElementById('sbLoginBar').classList.add('hidden');
+      document.getElementById('sbLoggedInBar').classList.remove('hidden');
+      document.getElementById('sbUserEmail').textContent = email;
+
+      const statusBadge = document.getElementById('supabaseStatus');
+      statusBadge.textContent = 'Supabase: Admin ✓';
+      statusBadge.className = 'px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-200';
+      addLog(`Sesi Supabase Admin aktif (${email}).`, 'system');
+    }
+
+    async function loginSupabaseAdmin() {
+      const email = document.getElementById('sbEmail').value.trim();
+      const password = document.getElementById('sbPassword').value;
+      const btn = document.getElementById('sbLoginBtn');
+
+      if (!email || !password) {
+        alert('Sila masukkan emel dan kata laluan Admin Supabase.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Mengesahkan...';
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        addLog(`Gagal login Supabase: ${error.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Sahkan Sesi';
+        return;
+      }
+
+      setSbLoggedInState(data.user.email);
+      btn.disabled = false;
+      btn.textContent = 'Sahkan Sesi';
+    }
+
+    async function logoutSupabaseAdmin() {
+      await supabaseClient.auth.signOut();
+      isSbAuthenticated = false;
+      document.getElementById('sbLoggedInBar').classList.add('hidden');
+      document.getElementById('sbLoginBar').classList.remove('hidden');
+      const statusBadge = document.getElementById('supabaseStatus');
+      statusBadge.textContent = 'Supabase: Belum Login';
+      statusBadge.className = 'px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-bold border border-amber-200';
+      addLog('Sesi Supabase Admin telah log keluar.', 'warn');
+    }
+
+    // ==========================================
+    // 3. LOGIK GOOGLE DRIVE
+    // ==========================================
+    window.onload = async function() {
+      await checkSupabaseSession();
+
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        prompt: '',
+        callback: async (response) => {
+          if (response.error) {
+            addLog("Gagal log masuk Google.", "error");
+            return;
+          }
+          accessToken = response.access_token;
+          document.getElementById('authBtn').classList.add('hidden');
+          const statusBtn = document.getElementById('gdriveStatus');
+          statusBtn.textContent = 'Drive: Bersambung ✓';
+          statusBtn.className = 'px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold border border-blue-200';
+          
+          addLog("Google Drive bersambung. Mengimbas fail .zip LinkedIn...", "system");
+          await loadZipFiles();
+        },
+      });
+      tokenClient.requestAccessToken();
+    };
+
+    function handleAuthClick() {
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
+
+    async function loadZipFiles() {
+      const container = document.getElementById('fileContainer');
+      try {
+        const query = encodeURIComponent("(mimeType = 'application/zip' or mimeType = 'application/x-zip-compressed' or name contains '.zip') and trashed = false");
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=modifiedTime desc&fields=files(id,name,size,modifiedTime)&pageSize=30`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (res.status === 401) throw new Error("TOKEN_EXPIRED");
+        const data = await res.json();
+        
+        container.innerHTML = '';
+        if (!data.files || data.files.length === 0) {
+          container.innerHTML = '<p class="text-xs text-rose-500">Tiada fail .zip dijumpai dalam Drive.</p>';
+          return;
+        }
+
+        data.files.forEach((file, idx) => {
+          const sizeMB = file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : '';
+          const isLinkedIn = file.name.toLowerCase().includes('linkedin');
+          const label = document.createElement('label');
+          label.className = `flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-200 p-2 rounded-lg transition-colors border ${isLinkedIn ? 'border-blue-200 bg-blue-50/40' : 'border-slate-100'}`;
+          label.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0">
+              <input type="checkbox" value="${file.id}" data-name="${file.name}" class="zip-checkbox checkbox-custom" ${isLinkedIn && idx === 0 ? 'checked' : ''}>
+              <span class="truncate" title="${file.name}">${file.name}</span>
+            </div>
+            <span class="text-[10px] text-slate-400 shrink-0">${sizeMB}</span>
+          `;
+          container.appendChild(label);
+        });
+
+        document.getElementById('fetchBtn').disabled = false;
+        addLog(`Berjaya memuatkan ${data.files.length} fail .zip. Klik 'Tarik & Ekstrak ZIP'.`, "info");
+      } catch (err) {
+        if (err.message === "TOKEN_EXPIRED") {
+          addLog("Sesi Google Drive tamat. Klik semula 'Sambung Akaun Google'.", "error");
+          document.getElementById('authBtn').classList.remove('hidden');
+        } else {
+          addLog(`Ralat mengimbas fail ZIP: ${err.message}`, "error");
+        }
+      }
+    }
+
+    // ==========================================
+    // 4. HELPER FUNCTIONS
+    // ==========================================
+    function fixMojibake(str) {
+      if (str === null || str === undefined) return null;
+      const cleaned = String(str).trim();
+      if (!cleaned) return null;
+      try {
+        const bytes = new Uint8Array(cleaned.length);
+        for (let i = 0; i < cleaned.length; i++) {
+          const code = cleaned.charCodeAt(i);
+          if (code > 255) return cleaned;
+          bytes[i] = code;
+        }
+        return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      } catch (e) {
+        return cleaned;
+      }
+    }
+
+    function cleanStr(val) {
+      if (val === null || val === undefined) return null;
+      const s = String(val).trim();
+      return s === '' ? null : s;
+    }
+
+    function getCol(row, candidates) {
+      for (let c of candidates) {
+        const foundKey = Object.keys(row).find(k => k.toLowerCase() === c.toLowerCase());
+        if (foundKey && cleanStr(row[foundKey])) return cleanStr(row[foundKey]);
+      }
+      return null;
+    }
+
+    // Sokong "12-Nov-26", "2-Feb-25" (dengan '-') DAN "12 Nov 2026" (dengan space)
+    function parseConnectionDate(dateStr) {
+      const s = cleanStr(dateStr);
+      if (!s) return null;
+
+      const months = {
+        jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+        jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+      };
+
+      const parts = s.split(/[-\s]+/);
+      if (parts.length !== 3) return null;
+
+      const day = parts[0].padStart(2, '0');
+      const mon = months[parts[1].slice(0, 3).toLowerCase()];
+      const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+
+      return mon ? `${year}-${mon}-${day}` : null;
+    }
+
+    // Sokong "11/11/26, 2:28 AM" & "1/11/2026 0:00"
+    function parseInvitationDate(dateStr) {
+      const s = cleanStr(dateStr);
+      if (!s) return null;
+
+      const cleanDateStr = s.replace(',', '').trim();
+      const parts = cleanDateStr.split(/\s+/);
+      const datePart = parts[0];
+      const timePart = parts[1] || '00:00:00';
+      const ampm = (parts[2] || '').toUpperCase();
+
+      const dParts = datePart.split('/');
+      if (dParts.length !== 3) return null;
+
+      let p1 = parseInt(dParts[0], 10);
+      let p2 = parseInt(dParts[1], 10);
+      const year = dParts[2].length === 2 ? '20' + dParts[2] : dParts[2];
+
+      let month = p1;
+      let day = p2;
+      if (p1 > 12) {
+        day = p1;
+        month = p2;
+      }
+
+      const mmStr = String(month).padStart(2, '0');
+      const ddStr = String(day).padStart(2, '0');
+
+      const tParts = timePart.split(':');
+      let hh = parseInt(tParts[0] || '0', 10);
+      const min = (tParts[1] || '00').padStart(2, '0');
+      const ss = (tParts[2] || '00').padStart(2, '0');
+
+      if (ampm === 'PM' && hh < 12) hh += 12;
+      if (ampm === 'AM' && hh === 12) hh = 0;
+
+      const hhStr = String(hh).padStart(2, '0');
+      const iso = `${year}-${mmStr}-${ddStr}T${hhStr}:${min}:${ss}Z`;
+      return isNaN(Date.parse(iso)) ? null : iso;
+    }
+
+    // "2026-11-11 04:01:40 UTC" -> ISO String
+    function parseMessageDate(dateStr) {
+      const s = cleanStr(dateStr);
+      if (!s) return null;
+      const iso = s.replace(' UTC', 'Z').replace(' ', 'T');
+      return isNaN(Date.parse(iso)) ? null : iso;
+    }
+
+    // ==========================================
+    // 5. EKSTRAK ZIP & AUTO-DETECT PIC
+    // ==========================================
+    async function startZipExtraction() {
+      const checkboxes = document.querySelectorAll('.zip-checkbox:checked');
+      if (checkboxes.length === 0) {
+        alert("Sila tanda (✓) sekurang-kurangnya satu fail .zip.");
+        return;
+      }
+
+      document.getElementById('fetchBtn').disabled = true;
+      const mapConn = new Map();
+      const mapInv = new Map();
+      const mapMsg = new Map();
+      const detectedPics = new Set();
+
+      try {
+        for (let cb of checkboxes) {
+          const fileId = cb.value;
+          const fileName = cb.dataset.name;
+          addLog(`Muat turun ${fileName} dari Google Drive...`, "system");
+
+          const dlRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          if (dlRes.status === 401) throw new Error("TOKEN_EXPIRED");
+
+          const arrayBuffer = await dlRes.arrayBuffer();
+          const zip = await JSZip.loadAsync(arrayBuffer);
+          const fileMap = {};
+          zip.forEach((relativePath, zipEntry) => {
+            if (!zipEntry.dir) {
+              const baseName = relativePath.split('/').pop().toLowerCase();
+              fileMap[baseName] = zipEntry;
+            }
+          });
+
+          // LANGKAH A: BACA INVITATIONS.CSV DAHULU UNTUK KESAN PIC (Direction = "OUTGOING")
+          let picName = "Unknown";
+          let invRows = [];
+
+          if (fileMap['invitations.csv']) {
+            let rawText = await fileMap['invitations.csv'].async('string');
+            rawText = rawText.replace(/^\uFEFF/, '');
+            const res = Papa.parse(rawText, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
+            invRows = res.data;
+
+            const senderFreq = {};
+            invRows.forEach(row => {
+              const dir = (getCol(row, ['Direction']) || '').toUpperCase();
+              const sender = fixMojibake(getCol(row, ['From']));
+              if (dir === 'OUTGOING' && sender) {
+                senderFreq[sender] = (senderFreq[sender] || 0) + 1;
+              }
+            });
+
+            let maxCount = 0;
+            for (const [name, count] of Object.entries(senderFreq)) {
+              if (count > maxCount) {
+                maxCount = count;
+                picName = name;
+              }
+            }
+          }
+
+          detectedPics.add(picName);
+          addLog(`👤 PIC Dikesan (${fileName}): ${picName}`, "system");
+
+          invRows.forEach(row => {
+            const sentAt = parseInvitationDate(getCol(row, ['Sent At', 'SentAt']));
+            const inviter = getCol(row, ['inviterProfileUrl', 'Inviter Profile Url']);
+            const invitee = getCol(row, ['inviteeProfileUrl', 'Invitee Profile Url']);
+            if (!sentAt || !inviter || !invitee) return;
+
+            const key = `${inviter}|${invitee}|${sentAt}`;
+            mapInv.set(key, {
+              pic_name: picName,
+              sender_name: fixMojibake(getCol(row, ['From'])),
+              recipient_name: fixMojibake(getCol(row, ['To'])),
+              sent_at: sentAt,
+              message: fixMojibake(getCol(row, ['Message'])),
+              direction: getCol(row, ['Direction']),
+              inviter_profile_url: inviter,
+              invitee_profile_url: invitee
+            });
+          });
+          if (invRows.length > 0) addLog(`✓ Invitations.csv [${picName}]: ${mapInv.size} rekod unik.`);
+
+          // LANGKAH B: BACA CONNECTIONS.CSV (Auto-kesan baris header)
+          if (fileMap['connections.csv']) {
+            let rawText = await fileMap['connections.csv'].async('string');
+            rawText = rawText.replace(/^\uFEFF/, '');
+            const allLines = rawText.split(/\r?\n/);
+            const headerIdx = allLines.findIndex(line =>
+              line.toLowerCase().includes('first name') && line.toLowerCase().includes('url')
+            );
+            const cleanCsvText = headerIdx !== -1
+              ? allLines.slice(headerIdx).join('\n')
+              : allLines.slice(3).join('\n');
+
+            const res = Papa.parse(cleanCsvText, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
+
+            res.data.forEach(row => {
+              const url = getCol(row, ['URL', 'Profile URL']);
+              if (!url) return;
+              const key = `${picName}|${url}`;
+              mapConn.set(key, {
+                pic_name: picName,
+                first_name: fixMojibake(getCol(row, ['First Name'])),
+                last_name: fixMojibake(getCol(row, ['Last Name'])),
+                profile_url: url,
+                email_address: getCol(row, ['Email Address']),
+                company: fixMojibake(getCol(row, ['Company'])),
+                position: fixMojibake(getCol(row, ['Position'])),
+                connected_on: parseConnectionDate(getCol(row, ['Connected On', 'Connected Date']))
+              });
+            });
+            addLog(`✓ Connections.csv [${picName}]: ${mapConn.size} rekod unik.`);
+          }
+
+          // LANGKAH C: BACA MESSAGES.CSV
+          if (fileMap['messages.csv']) {
+            let rawText = await fileMap['messages.csv'].async('string');
+            rawText = rawText.replace(/^\uFEFF/, '');
+            const res = Papa.parse(rawText, { header: true, skipEmptyLines: true, transformHeader: h => h.trim() });
+
+            res.data.forEach(row => {
+              const convId = getCol(row, ['CONVERSATION ID']);
+              const sentAt = parseMessageDate(getCol(row, ['DATE']));
+              const senderUrl = getCol(row, ['SENDER PROFILE URL']);
+              if (!convId || !sentAt) return;
+
+              const key = `${convId}|${senderUrl || ''}|${sentAt}`;
+              mapMsg.set(key, {
+                pic_name: picName,
+                conversation_id: convId,
+                conversation_title: fixMojibake(getCol(row, ['CONVERSATION TITLE'])),
+                sender_name: fixMojibake(getCol(row, ['FROM'])),
+                sender_profile_url: senderUrl,
+                recipient_name: fixMojibake(getCol(row, ['TO'])),
+                recipient_profile_urls: getCol(row, ['RECIPIENT PROFILE URLS']),
+                sent_at: sentAt,
+                subject: fixMojibake(getCol(row, ['SUBJECT'])),
+                content: fixMojibake(getCol(row, ['CONTENT'])),
+                folder: getCol(row, ['FOLDER']),
+                attachments: getCol(row, ['ATTACHMENTS'])
+              });
+            });
+            addLog(`✓ messages.csv [${picName}]: ${mapMsg.size} rekod unik (Emoji dibaiki).`);
+          }
+        }
+
+        parsedData.connections = Array.from(mapConn.values());
+        parsedData.invitations = Array.from(mapInv.values());
+        parsedData.messages = Array.from(mapMsg.values());
+
+        document.getElementById('countConn').textContent = parsedData.connections.length.toLocaleString();
+        document.getElementById('countInv').textContent = parsedData.invitations.length.toLocaleString();
+        document.getElementById('countMsg').textContent = parsedData.messages.length.toLocaleString();
+
+        const badge = document.getElementById('detectedPicBadge');
+        badge.textContent = `PIC: ${Array.from(detectedPics).join(', ')}`;
+        badge.classList.remove('hidden');
+
+        const sampleMsg = parsedData.messages.find(m => m.content && m.content.length > 20);
+        if (sampleMsg) {
+          document.getElementById('emojiPreviewBox').classList.remove('hidden');
+          document.getElementById('previewMeta').textContent = `[PIC: ${sampleMsg.pic_name}] ${sampleMsg.sender_name} ➔ ${sampleMsg.recipient_name}`;
+          document.getElementById('emojiPreviewText').textContent = sampleMsg.content;
+        }
+
+        const total = parsedData.connections.length + parsedData.invitations.length + parsedData.messages.length;
+        if (total > 0) {
+          addLog(`Sedia! Jumlah keseluruhan ${total} rekod sedia ditolak ke Supabase.`, "system");
+          document.getElementById('pushBtn').disabled = false;
+        }
+
+      } catch (err) {
+        if (err.message === "TOKEN_EXPIRED") {
+          addLog("Sesi Google Drive tamat! Klik semula 'Sambung Akaun Google'.", "error");
+          document.getElementById('authBtn').classList.remove('hidden');
+        } else {
+          addLog(`Ralat: ${err.message}`, "error");
+        }
+      } finally {
+        document.getElementById('fetchBtn').disabled = false;
+      }
+    }
+
+    // ==========================================
+    // 6. TOLAK KE SUPABASE (BATCH UPSERT)
+    // ==========================================
+    async function batchUpsert(tableName, records, conflictCols) {
+      const BATCH_SIZE = 500;
+      let totalInserted = 0;
+      for (let i = 0; i < records.length; i += BATCH_SIZE) {
+        const batch = records.slice(i, i + BATCH_SIZE);
+        const { error } = await supabaseClient
+          .from(tableName)
+          .upsert(batch, { onConflict: conflictCols });
+
+        if (error) throw new Error(`[${tableName}] ${error.message}`);
+        totalInserted += batch.length;
+        addLog(`✓ ${tableName}: ${totalInserted}/${records.length} rekod disimpan.`);
+      }
+    }
+
+    async function pushToSupabase() {
+      if (!isSbAuthenticated) {
+        alert('Sila log masuk akaun Admin Supabase di bahagian atas terlebih dahulu sebelum menolak data.');
+        return;
+      }
+
+      document.getElementById('pushBtn').disabled = true;
+      addLog("Memulakan penghantaran ke 3 jadual Supabase...", "system");
+
+      try {
+        if (parsedData.connections.length > 0) {
+          await batchUpsert('linkedin_connections', parsedData.connections, 'pic_name,profile_url');
+        }
+        if (parsedData.invitations.length > 0) {
+          await batchUpsert('linkedin_invitations', parsedData.invitations, 'inviter_profile_url,invitee_profile_url,sent_at');
+        }
+        if (parsedData.messages.length > 0) {
+          await batchUpsert('linkedin_messages', parsedData.messages, 'conversation_id,sender_profile_url,sent_at');
+        }
+
+        addLog("PROSES SELESAI! Semua data LinkedIn berjaya disimpan mengikut PIC.", "system");
+        document.getElementById('pushBtn').innerHTML = "✓ Semua Data Berjaya Disimpan!";
+        document.getElementById('pushBtn').classList.replace('bg-emerald-500', 'bg-blue-600');
+
+      } catch (err) {
+        addLog(`Ralat Supabase: ${err.message}`, "error");
+        document.getElementById('pushBtn').disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
