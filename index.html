@@ -489,13 +489,13 @@
     }
 
     async function loadAdminTeamDropdown() {
-      const { data } = await sb
-        .from('linkedin_connections')
-        .select('pic_team')
-        .not('pic_team', 'is', null);
+      const { data, error } = await sb
+        .from('staff_profiles')
+        .select('staff_name')
+        .order('staff_name', { ascending: true });
 
-      if (data) {
-        const uniqueTeams = [...new Set(data.map(r => r.pic_team))].sort();
+      if (!error && data) {
+        const uniqueTeams = [...new Set(data.map(r => r.staff_name).filter(Boolean))];
         const select = document.getElementById('picTeamFilter');
         select.innerHTML = '<option value="ALL" class="text-slate-900">Semua PIC Team</option>';
         uniqueTeams.forEach(team => {
