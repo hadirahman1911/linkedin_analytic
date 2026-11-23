@@ -489,20 +489,17 @@
     }
 
     async function loadAdminTeamDropdown() {
-      const { data, error } = await sb
-        .from('staff_profiles')
-        .select('staff_name')
-        .order('staff_name', { ascending: true });
+      const { data, error } = await sb.rpc('get_staff_dropdown_list');
 
       if (!error && data) {
-        const uniqueTeams = [...new Set(data.map(r => r.staff_name).filter(Boolean))];
         const select = document.getElementById('picTeamFilter');
         select.innerHTML = '<option value="ALL" class="text-slate-900">Semua PIC Team</option>';
-        uniqueTeams.forEach(team => {
+        data.forEach(row => {
+          if (!row.staff_name) return;
           const opt = document.createElement('option');
-          opt.value = team;
+          opt.value = row.staff_name;
           opt.className = 'text-slate-900';
-          opt.textContent = team;
+          opt.textContent = row.nickname || row.staff_name;
           select.appendChild(opt);
         });
       }
