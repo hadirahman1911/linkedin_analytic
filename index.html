@@ -203,6 +203,12 @@
               </div>
             </div>
 
+            <!-- Paparan Masa Synced At Terkini -->
+              <span id="lastSyncedBadge"
+                class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 rounded-xl px-2.5 py-1.5">
+                🕒 Synced: -
+              </span>
+            
             <div class="flex items-center gap-2 w-full sm:w-auto">
               <input id="searchConnInput" type="text" placeholder="Cari nama, syarikat, jawatan..."
                 onkeyup="debounceConnSearch()"
@@ -510,6 +516,11 @@
       return document.getElementById('picTeamFilter').value;
     }
 
+    // Kecualikan team members (Kunkwan / The KOL Academy - case-insensitive) sambil kekalkan rekod company NULL
+    function applyInternalCompanyExclusion(query) {
+      return query.or('company.is.null,and(company.not.ilike.%kunkwan%,company.not.ilike.%the kol academy%)');
+    }
+    
     async function onTeamFilterChange() {
       connPage = 1;
       invPage = 1;
@@ -534,13 +545,24 @@
         let q = sb.from('linkedin_connections').select('*', { count: 'exact', head: true });
         if (teamFilter !== 'ALL') q = q.eq('pic_team', teamFilter);
         if (msgStatus) q = q.eq('is_message', msgStatus);
+        q = applyInternalCompanyExclusion(q);
         return q;
       };
 
-      const [resAll, resNo, resYes] = await Promise.all([
+      // Query untuk dapatkan masa synced_at paling terkini bagi PIC/team yang dipilih
+      let syncQuery = sb
+        .from('linkedin_connections')
+        .select('synced_at')
+        .not('synced_at', 'is', null)
+        .order('synced_at', { ascending: false })
+        .limit(1);
+      if (teamFilter !== 'ALL') syncQuery = syncQuery.eq('pic_team', teamFilter);
+
+      const [resAll, resNo, resYes, resSync] = await Promise.all([
         buildCountQuery(null),
         buildCountQuery('No'),
-        buildCountQuery('Yes')
+        buildCountQuery('Yes'),
+        syncQuery
       ]);
 
       const countAll = resAll.count || 0;
@@ -553,6 +575,24 @@
       document.getElementById('statTotalYes').textContent = countYes.toLocaleString();
       document.getElementById('statRate').textContent = `${rate}%`;
 
+      // Papar masa Synced At dalam waktu Malaysia (MYT)
+      const syncEl = document.getElementById('lastSyncedBadge');
+      const latestSync = resSync.data?.[0]?.synced_at;
+      if (latestSync) {
+        const fmtSync = new Date(latestSync).toLocaleString('ms-MY', {
+          timeZone: 'Asia/Kuala_Lumpur',
+          day: '2-digit',
+          month: '2-digit',
+          year: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        syncEl.textContent = `🕒 Synced: ${fmtSync}`;
+      } else {
+        syncEl.textContent = '🕒 Synced: -';
+      }
+
       let dateQuery = sb
         .from('linkedin_connections')
         .select('connected_on')
@@ -563,6 +603,7 @@
       if (teamFilter !== 'ALL') {
         dateQuery = dateQuery.eq('pic_team', teamFilter);
       }
+      dateQuery = applyInternalCompanyExclusion(dateQuery);
 
       const { data: dateRows } = await dateQuery;
       renderConnectedOnChart(dateRows || []);
@@ -715,6 +756,9 @@
         query = query.eq('is_message', statusMsgFilter);
       }
 
+      // 👉 TAMBAH SATU BARIS INI DI SINI:
+      query = applyInternalCompanyExclusion(query);
+      
       if (search) {
         query = query.or(
           `first_name.ilike.%${search}%,last_name.ilike.%${search}%,company.ilike.%${search}%,position.ilike.%${search}%,email_address.ilike.%${search}%`
