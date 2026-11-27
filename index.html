@@ -1,3 +1,8 @@
+
+
+
+HTML icon
+linkedin_analytic_v6
 <!DOCTYPE html>
 <html lang="ms">
 <head>
@@ -202,6 +207,7 @@
                   <option value="Yes">Yes (Sudah DM)</option>
                   <option value="Done">Done (Manual)</option>
                   <option value="Kunkwan Team">Kunkwan Team</option>
+                  <option value="Chinese">Chinese</option>
                   <option value="ALL">All (Semua)</option>
                 </select>
               </div>
@@ -419,7 +425,7 @@
           <div class="p-3 sm:p-4 border-b border-slate-200 flex items-center justify-between gap-2 bg-white">
             <div>
               <h3 class="text-xs sm:text-sm font-extrabold text-slate-800">🕒 Rekod Perubahan Status (Changes Log)</h3>
-              <p class="text-[10px] sm:text-xs text-slate-500">Semua perubahan manual (Done / Kunkwan Team) direkodkan di sini dan boleh di-revert.</p>
+              <p class="text-[10px] sm:text-xs text-slate-500">Semua perubahan manual (Done / Kunkwan Team / Chinese) direkodkan di sini dan boleh di-revert.</p>
             </div>
             <button onclick="loadChangesLog()"
               class="text-[11px] sm:text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0">
@@ -933,6 +939,8 @@
             statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">Done</span>`;
           } else if (row.is_message === 'Kunkwan Team') {
             statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200">Kunkwan</span>`;
+          } else if (row.is_message === 'Chinese') {
+            statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">Chinese</span>`;
           } else {
             statusBadge = `
               <div class="relative inline-block text-left">
@@ -949,6 +957,10 @@
                   <button type="button" onclick="changeConnectionStatus('${row.id}', 'Kunkwan Team')"
                     class="w-full text-left px-3 py-1.5 text-[11px] font-bold text-purple-700 hover:bg-purple-50 flex items-center gap-1.5 cursor-pointer">
                     <span>🏢</span><span>Kunkwan Team</span>
+                  </button>
+                  <button type="button" onclick="changeConnectionStatus('${row.id}', 'Chinese')"
+                    class="w-full text-left px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50 flex items-center gap-1.5 cursor-pointer">
+                    <span>🏮</span><span>Chinese</span>
                   </button>
                 </div>
               </div>`;
