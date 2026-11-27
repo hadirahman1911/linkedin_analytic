@@ -70,7 +70,7 @@
           <div id="adminFilterWrapper" class="hidden flex items-center gap-1.5 sm:gap-2">
             <select id="picTeamFilter" onchange="onTeamFilterChange()"
               class="text-[11px] sm:text-xs font-semibold bg-white/10 text-white border border-white/20 rounded-xl px-2.5 sm:px-3.5 py-1.5 sm:py-2 outline-none focus:ring-2 focus:ring-blue-400">
-              <option value="ALL" class="text-slate-900">Semua PIC Team (Admin View)</option>
+              <option value="ALL" class="text-slate-900">Semua PIC Team</option>
             </select>
 
             <button onclick="openAddStaffModal()"
@@ -156,21 +156,33 @@
       </div>
 
       <!-- ==========================================
-           NAVIGASI TAB (CONNECTIONS vs INVITATIONS)
+           NAVIGASI TAB (CONNECTIONS vs INVITATIONS vs MESSAGES)
            ========================================== -->
       <div class="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <!-- Tab Bar -->
-        <div class="flex items-center border-b border-slate-200 bg-slate-50/70 px-3 pt-2.5 gap-1.5">
+        <div class="flex items-center border-b border-slate-200 bg-slate-50/70 px-3 pt-2.5 gap-1.5 overflow-x-auto">
           <button id="tabBtnConnections" onclick="switchTab('connections')"
-            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer">
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer shrink-0">
             <span>📋 Connections</span>
             <span id="badgeTabConn" class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full text-[10px]">0</span>
           </button>
 
           <button id="tabBtnInvitations" onclick="switchTab('invitations')"
-            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer">
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer shrink-0">
             <span>📨 Invitations</span>
             <span id="badgeTabInv" class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-[10px]">0</span>
+          </button>
+
+          <button id="tabBtnMessages" onclick="switchTab('messages')"
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer shrink-0">
+            <span>💬 Messages</span>
+            <span id="badgeTabMsg" class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-[10px]">-</span>
+          </button>
+
+          <button id="tabBtnLogs" onclick="switchTab('logs')"
+            class="px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer shrink-0">
+            <span>🕒 Changes Log</span>
+            <span id="badgeTabLogs" class="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded-full text-[10px]">-</span>
           </button>
         </div>
 
@@ -188,6 +200,8 @@
                   class="text-[11px] sm:text-xs font-bold bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-2.5 py-1.5 outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="No" selected>No (Belum DM)</option>
                   <option value="Yes">Yes (Sudah DM)</option>
+                  <option value="Done">Done (Manual)</option>
+                  <option value="Kunkwan Team">Kunkwan Team</option>
                   <option value="ALL">All (Semua)</option>
                 </select>
               </div>
@@ -201,14 +215,14 @@
                   <option value="asc">Lama → Latest</option>
                 </select>
               </div>
-            </div>
 
-            <!-- Paparan Masa Synced At Terkini -->
+              <!-- Paparan Masa Synced At Terkini -->
               <span id="lastSyncedBadge"
                 class="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 rounded-xl px-2.5 py-1.5">
                 🕒 Synced: -
               </span>
-            
+            </div>
+
             <div class="flex items-center gap-2 w-full sm:w-auto">
               <input id="searchConnInput" type="text" placeholder="Cari nama, syarikat, jawatan..."
                 onkeyup="debounceConnSearch()"
@@ -327,6 +341,113 @@
           </div>
         </div>
 
+        <!-- ==========================================
+             KANDUNGAN TAB 3: MESSAGES (GAYA WHATSAPP WEB)
+             ========================================== -->
+        <div id="panelMessages" class="hidden">
+          <div class="grid grid-cols-1 md:grid-cols-12 h-[620px] bg-white">
+            
+            <!-- PANEL KIRI: SENARAI NAMA / PERBUALAN -->
+            <div id="msgSidebarPane" class="md:col-span-4 lg:col-span-4 border-r border-slate-200 flex flex-col h-full bg-white">
+              <!-- Carian Chat -->
+              <div class="p-3 border-b border-slate-200 bg-slate-50/70">
+                <input id="searchMsgInput" type="text" placeholder="Cari nama prospek atau mesej..."
+                  onkeyup="debounceMsgSearch()"
+                  class="w-full text-xs bg-white border border-slate-300 rounded-xl px-3.5 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+
+              <!-- Senarai Conversation -->
+              <div id="msgConvList" class="flex-1 overflow-y-auto divide-y divide-slate-100">
+                <div class="p-8 text-center text-xs text-slate-400">
+                  Klik tab Messages untuk memuatkan senarai chat...
+                </div>
+              </div>
+
+              <!-- Pagination Kiri -->
+              <div class="p-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-[11px]">
+                <button id="btnMsgPrev" onclick="changeMsgPage(-1)" disabled
+                  class="px-2.5 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 disabled:opacity-40 cursor-pointer">
+                  ← Prev
+                </button>
+                <span id="msgPageInfo" class="text-slate-500 font-medium">0 chat</span>
+                <button id="btnMsgNext" onclick="changeMsgPage(1)" disabled
+                  class="px-2.5 py-1 bg-white border border-slate-300 rounded-lg font-semibold text-slate-700 disabled:opacity-40 cursor-pointer">
+                  Next →
+                </button>
+              </div>
+            </div>
+
+            <!-- PANEL KANAN: PAPARAN CHAT (DITARIK BILA DIKLIK SAHAJA) -->
+            <div id="msgChatPane" class="hidden md:flex md:col-span-8 lg:col-span-8 flex-col h-full bg-[#efeae2]/40">
+              <!-- Header Chat Aktif -->
+              <div id="chatHeader" class="hidden px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <button onclick="backToConvListMobile()" class="md:hidden px-2 py-1 text-xs font-bold bg-slate-100 rounded-lg text-slate-700 cursor-pointer">
+                    ←
+                  </button>
+                  <div id="chatAvatar" class="w-9 h-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    ?
+                  </div>
+                  <div class="min-w-0">
+                    <h3 id="chatContactName" class="text-xs sm:text-sm font-extrabold text-slate-900 truncate">-</h3>
+                    <p id="chatPicLabel" class="text-[10px] sm:text-[11px] text-slate-500 truncate">PIC: -</p>
+                  </div>
+                </div>
+                <button id="btnRefreshChat" onclick="reloadActiveChat()"
+                  class="text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1.5 rounded-xl transition cursor-pointer shrink-0">
+                  ↻ Sync Chat
+                </button>
+              </div>
+
+              <!-- Ruangan Mesej (Bubbles) -->
+              <div id="chatMessagesBody" class="flex-1 overflow-y-auto p-4 space-y-2.5">
+                <div class="h-full flex flex-col items-center justify-center text-center p-6">
+                  <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-3">💬</div>
+                  <p class="text-sm font-bold text-slate-700">Pilih perbualan di sebelah kiri</p>
+                  <p class="text-xs text-slate-400 mt-1 max-w-xs">Mesej penuh hanya akan ditarik dari pangkalan data apabila anda klik nama prospek.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ==========================================
+             KANDUNGAN TAB 4: CHANGES LOG (REKOD & REVERT)
+             ========================================== -->
+        <div id="panelLogs" class="hidden">
+          <div class="p-3 sm:p-4 border-b border-slate-200 flex items-center justify-between gap-2 bg-white">
+            <div>
+              <h3 class="text-xs sm:text-sm font-extrabold text-slate-800">🕒 Rekod Perubahan Status (Changes Log)</h3>
+              <p class="text-[10px] sm:text-xs text-slate-500">Semua perubahan manual (Done / Kunkwan Team) direkodkan di sini dan boleh di-revert.</p>
+            </div>
+            <button onclick="loadChangesLog()"
+              class="text-[11px] sm:text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-xl transition cursor-pointer shrink-0">
+              ↻ Refresh
+            </button>
+          </div>
+
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-100/80 border-b border-slate-200 text-[9px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-600">
+                  <th class="py-2.5 px-2 sm:px-3">Masa (MYT)</th>
+                  <th class="py-2.5 px-2 sm:px-3">User</th>
+                  <th class="py-2.5 px-2 sm:px-3">Prospek</th>
+                  <th class="py-2.5 px-2 sm:px-3">PIC Team</th>
+                  <th class="py-2.5 px-2 sm:px-3">Perubahan</th>
+                  <th class="py-2.5 px-2 sm:px-3 text-center">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody" class="divide-y divide-slate-100 text-[10px] sm:text-xs text-slate-700">
+                <tr>
+                  <td colspan="6" class="py-10 text-center text-slate-400">Klik tab Changes Log untuk memuatkan rekod...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
       <!-- ==========================================
@@ -410,6 +531,13 @@
     let invRows = [];
     let invSearchTimer = null;
 
+    let msgPage = 1;
+    let msgTotal = 0;
+    let msgConvRows = [];
+    let msgLoadedOnce = false;
+    let msgSearchTimer = null;
+    let activeConversation = null;
+
     let connectedChartInstance = null;
 
     // Auto-tukar Kunkwan ID ("dayana") -> "dayana@kunkwan.local" (jika sudah ada '@', kekalkan)
@@ -458,6 +586,8 @@
     async function handleLogout() {
       await sb.auth.signOut();
       currentProfile = null;
+      msgLoadedOnce = false;
+      activeConversation = null;
       document.getElementById('dashboardScreen').classList.add('hidden');
       document.getElementById('loginScreen').classList.remove('hidden');
     }
@@ -482,7 +612,7 @@
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('dashboardScreen').classList.remove('hidden');
 
-      document.getElementById('navStaffName').textContent = profile.staff_name;
+      document.getElementById('navStaffName').textContent = profile.nickname || profile.staff_name;
       document.getElementById('navRoleBadge').textContent =
         profile.role === 'admin' ? 'ADMIN • ALL' : `STAF • ${profile.staff_name}`;
 
@@ -516,15 +646,26 @@
       return document.getElementById('picTeamFilter').value;
     }
 
-    // Kecualikan team members (Kunkwan / The KOL Academy - case-insensitive) sambil kekalkan rekod company NULL
+    // Kecualikan team members (Kunkwan / The KOL Academy - case-insensitive) sambil kekalkan company NULL
     function applyInternalCompanyExclusion(query) {
       return query.or('company.is.null,and(company.not.ilike.%kunkwan%,company.not.ilike.%the kol academy%)');
     }
-    
+
     async function onTeamFilterChange() {
       connPage = 1;
       invPage = 1;
+      msgPage = 1;
+      msgLoadedOnce = false;
+      activeConversation = null;
+      resetChatPanePlaceholder();
+
       await refreshAllData();
+      if (activeTab === 'messages') {
+        await loadConversationsList();
+      }
+      if (activeTab === 'logs') {
+        await loadChangesLog();
+      }
     }
 
     async function refreshAllData() {
@@ -549,7 +690,6 @@
         return q;
       };
 
-      // Query untuk dapatkan masa synced_at paling terkini bagi PIC/team yang dipilih
       let syncQuery = sb
         .from('linkedin_connections')
         .select('synced_at')
@@ -598,7 +738,7 @@
         .select('connected_on')
         .not('connected_on', 'is', null)
         .order('connected_on', { ascending: false })
-        .limit(5000);
+        .limit(1500);
 
       if (teamFilter !== 'ALL') {
         dateQuery = dateQuery.eq('pic_team', teamFilter);
@@ -676,21 +816,28 @@
     // ==========================================
     function switchTab(tabName) {
       activeTab = tabName;
-      const btnConn = document.getElementById('tabBtnConnections');
-      const btnInv = document.getElementById('tabBtnInvitations');
-      const panelConn = document.getElementById('panelConnections');
-      const panelInv = document.getElementById('panelInvitations');
+      const tabs = {
+        connections: { btn: 'tabBtnConnections', panel: 'panelConnections' },
+        invitations: { btn: 'tabBtnInvitations', panel: 'panelInvitations' },
+        messages:    { btn: 'tabBtnMessages',    panel: 'panelMessages' },
+        logs:        { btn: 'tabBtnLogs',        panel: 'panelLogs' }
+      };
 
-      if (tabName === 'connections') {
-        btnConn.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer';
-        btnInv.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
-        panelConn.classList.remove('hidden');
-        panelInv.classList.add('hidden');
-      } else {
-        btnInv.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer';
-        btnConn.className = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer';
-        panelInv.classList.remove('hidden');
-        panelConn.classList.add('hidden');
+      const activeClass = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-extrabold rounded-t-xl border-t border-x border-slate-200 bg-white text-blue-700 -mb-px flex items-center gap-1.5 cursor-pointer shrink-0';
+      const inactiveClass = 'px-3 sm:px-4 py-2 text-[11px] sm:text-xs font-bold rounded-t-xl text-slate-500 hover:text-slate-800 flex items-center gap-1.5 cursor-pointer shrink-0';
+
+      Object.keys(tabs).forEach(key => {
+        const isCurrent = key === tabName;
+        document.getElementById(tabs[key].btn).className = isCurrent ? activeClass : inactiveClass;
+        document.getElementById(tabs[key].panel).classList.toggle('hidden', !isCurrent);
+      });
+
+      // Hanya tarik senarai chat bila pengguna buka tab Messages
+      if (tabName === 'messages' && !msgLoadedOnce) {
+        loadConversationsList();
+      }
+      if (tabName === 'logs') {
+        loadChangesLog();
       }
     }
 
@@ -756,9 +903,8 @@
         query = query.eq('is_message', statusMsgFilter);
       }
 
-      // 👉 TAMBAH SATU BARIS INI DI SINI:
       query = applyInternalCompanyExclusion(query);
-      
+
       if (search) {
         query = query.or(
           `first_name.ilike.%${search}%,last_name.ilike.%${search}%,company.ilike.%${search}%,position.ilike.%${search}%,email_address.ilike.%${search}%`
@@ -780,10 +926,33 @@
         tbody.innerHTML = '<tr><td colspan="7" class="py-10 text-center text-slate-400">Tiada rekod connections ditemui.</td></tr>';
       } else {
         tbody.innerHTML = connRows.map((row) => {
-          const isYes = row.is_message === 'Yes';
-          const statusBadge = isYes
-            ? `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Yes</span>`
-            : `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200">No</span>`;
+          let statusBadge = '';
+          if (row.is_message === 'Yes') {
+            statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Yes</span>`;
+          } else if (row.is_message === 'Done') {
+            statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">Done</span>`;
+          } else if (row.is_message === 'Kunkwan Team') {
+            statusBadge = `<span class="inline-block px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200">Kunkwan</span>`;
+          } else {
+            statusBadge = `
+              <div class="relative inline-block text-left">
+                <button type="button" onclick="toggleStatusMenu(event, '${row.id}')"
+                  class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[11px] font-extrabold bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 transition cursor-pointer">
+                  <span>No</span>
+                  <span class="text-[8px] sm:text-[9px]">▾</span>
+                </button>
+                <div id="statusMenu-${row.id}" class="status-dropdown-menu hidden absolute left-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-200 py-1 z-30">
+                  <button type="button" onclick="changeConnectionStatus('${row.id}', 'Done')"
+                    class="w-full text-left px-3 py-1.5 text-[11px] font-bold text-blue-700 hover:bg-blue-50 flex items-center gap-1.5 cursor-pointer">
+                    <span>✅</span><span>Done</span>
+                  </button>
+                  <button type="button" onclick="changeConnectionStatus('${row.id}', 'Kunkwan Team')"
+                    class="w-full text-left px-3 py-1.5 text-[11px] font-bold text-purple-700 hover:bg-purple-50 flex items-center gap-1.5 cursor-pointer">
+                    <span>🏢</span><span>Kunkwan Team</span>
+                  </button>
+                </div>
+              </div>`;
+          }
 
           const picShort = (row.pic_team || '-').replace(' KOL', '');
           const companyPos = [row.company, row.position].filter(Boolean).join(' • ') || '-';
@@ -921,6 +1090,310 @@
       document.getElementById('invPageIndicator').textContent = `Halaman ${invPage} / ${totalPages}`;
       document.getElementById('btnInvPrev').disabled = invPage <= 1;
       document.getElementById('btnInvNext').disabled = invPage >= totalPages;
+    }
+
+    // ==========================================
+    // TAB 3: MESSAGES (LAZY SYNC ON CLICK)
+    // ==========================================
+    function resetChatPanePlaceholder() {
+      document.getElementById('chatHeader').classList.add('hidden');
+      document.getElementById('chatMessagesBody').innerHTML = `
+        <div class="h-full flex flex-col items-center justify-center text-center p-6">
+          <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-3">💬</div>
+          <p class="text-sm font-bold text-slate-700">Pilih perbualan di sebelah kiri</p>
+          <p class="text-xs text-slate-400 mt-1 max-w-xs">Mesej penuh hanya akan ditarik dari pangkalan data apabila anda klik nama prospek.</p>
+        </div>
+      `;
+    }
+
+    function debounceMsgSearch() {
+      clearTimeout(msgSearchTimer);
+      msgSearchTimer = setTimeout(() => {
+        msgPage = 1;
+        loadConversationsList();
+      }, 350);
+    }
+
+    function changeMsgPage(delta) {
+      msgPage += delta;
+      loadConversationsList();
+    }
+
+    async function loadConversationsList() {
+      const listEl = document.getElementById('msgConvList');
+      listEl.innerHTML = '<div class="p-8 text-center text-xs text-slate-400">Memuatkan senarai perbualan...</div>';
+
+      const teamFilter = getActiveTeamFilter();
+      const search = document.getElementById('searchMsgInput').value.trim();
+      const offset = (msgPage - 1) * PAGE_SIZE;
+
+      const { data, error } = await sb.rpc('get_linkedin_conversations', {
+        p_pic_name: teamFilter,
+        p_search: search,
+        p_limit: PAGE_SIZE,
+        p_offset: offset
+      });
+
+      if (error) {
+        listEl.innerHTML = `<div class="p-6 text-center text-xs text-rose-500 font-semibold">Ralat: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+
+      msgLoadedOnce = true;
+      msgConvRows = data || [];
+      msgTotal = msgConvRows.length > 0 ? Number(msgConvRows[0].total_count) : 0;
+      document.getElementById('badgeTabMsg').textContent = msgTotal.toLocaleString();
+
+      renderConversationList();
+
+      const totalPages = Math.max(1, Math.ceil(msgTotal / PAGE_SIZE));
+      document.getElementById('msgPageInfo').textContent = `Hal ${msgPage}/${totalPages} (${msgTotal.toLocaleString()})`;
+      document.getElementById('btnMsgPrev').disabled = msgPage <= 1;
+      document.getElementById('btnMsgNext').disabled = msgPage >= totalPages;
+    }
+
+    function renderConversationList() {
+      const listEl = document.getElementById('msgConvList');
+      if (msgConvRows.length === 0) {
+        listEl.innerHTML = '<div class="p-8 text-center text-xs text-slate-400">Tiada rekod perbualan ditemui.</div>';
+        return;
+      }
+
+      listEl.innerHTML = msgConvRows.map((c, idx) => {
+        const initial = (c.contact_name || '?').trim().charAt(0).toUpperCase();
+        const dateFmt = c.last_sent_at
+          ? new Date(c.last_sent_at).toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: '2-digit' })
+          : '';
+        const isSelected = activeConversation && activeConversation.conversation_id === c.conversation_id;
+
+        return `
+          <button onclick="openConversationByIndex(${idx})"
+            class="w-full text-left px-3.5 py-3 hover:bg-slate-50 transition flex items-start gap-2.5 cursor-pointer ${isSelected ? 'bg-blue-50/80 border-l-4 border-blue-600' : ''}">
+            <div class="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center shrink-0 mt-0.5">
+              ${escapeHtml(initial)}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-1">
+                <p class="text-xs font-bold text-slate-900 truncate">${escapeHtml(c.contact_name)}</p>
+                <span class="text-[10px] text-slate-400 shrink-0 font-mono">${dateFmt}</span>
+              </div>
+              <p class="text-[11px] text-slate-500 truncate mt-0.5">${escapeHtml(c.last_message)}</p>
+              <p class="text-[9.5px] font-semibold text-indigo-600 mt-0.5 truncate">PIC: ${escapeHtml(c.pic_name || '-')}</p>
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Tarik mesej penuh HANYA apabila nama diklik
+    async function openConversationByIndex(idx) {
+      const conv = msgConvRows[idx];
+      if (!conv) return;
+
+      activeConversation = conv;
+      renderConversationList();
+
+      // Sokongan skrin telefon (sembunyi senarai kiri, tunjuk chat kanan)
+      document.getElementById('msgSidebarPane').classList.add('hidden', 'md:flex');
+      const chatPane = document.getElementById('msgChatPane');
+      chatPane.classList.remove('hidden');
+      chatPane.classList.add('flex');
+
+      document.getElementById('chatHeader').classList.remove('hidden');
+      document.getElementById('chatAvatar').textContent = (conv.contact_name || '?').trim().charAt(0).toUpperCase();
+      document.getElementById('chatContactName').textContent = conv.contact_name;
+      document.getElementById('chatPicLabel').textContent = `PIC: ${conv.pic_name || '-'}`;
+
+      await fetchConversationThread(conv);
+    }
+
+    async function reloadActiveChat() {
+      if (activeConversation) {
+        await fetchConversationThread(activeConversation);
+      }
+    }
+
+    async function fetchConversationThread(conv) {
+      const bodyEl = document.getElementById('chatMessagesBody');
+      bodyEl.innerHTML = '<div class="py-12 text-center text-xs text-slate-500 font-medium">⏳ Menyegerak (sync) mesej perbualan...</div>';
+
+      const { data, error } = await sb
+        .from('linkedin_messages')
+        .select('sender_name, content, sent_at, subject, attachments')
+        .eq('conversation_id', conv.conversation_id)
+        .order('sent_at', { ascending: true })
+        .limit(200);
+
+      if (error) {
+        bodyEl.innerHTML = `<div class="p-6 text-center text-xs text-rose-600 font-semibold">Ralat memuatkan chat: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        bodyEl.innerHTML = '<div class="p-8 text-center text-xs text-slate-400">Tiada isi mesej ditemui.</div>';
+        return;
+      }
+
+      const picLower = (conv.pic_name || '').trim().toLowerCase();
+
+      bodyEl.innerHTML = data.map(m => {
+        const isOutgoing = (m.sender_name || '').trim().toLowerCase() === picLower;
+        const timeStr = m.sent_at
+          ? new Date(m.sent_at).toLocaleString('ms-MY', {
+              timeZone: 'Asia/Kuala_Lumpur',
+              day: '2-digit', month: '2-digit', year: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            })
+          : '';
+
+        return `
+          <div class="flex ${isOutgoing ? 'justify-end' : 'justify-start'}">
+            <div class="max-w-[82%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 shadow-xs border ${
+              isOutgoing
+                ? 'bg-emerald-100/90 border-emerald-200 text-slate-900 rounded-br-sm'
+                : 'bg-white border-slate-200 text-slate-800 rounded-bl-sm'
+            }">
+              <p class="text-[10px] font-extrabold ${isOutgoing ? 'text-emerald-800' : 'text-blue-700'} mb-0.5">
+                ${escapeHtml(m.sender_name || '-')}
+              </p>
+              ${m.subject ? `<p class="text-[11px] font-bold text-slate-700 mb-1">Subjek: ${escapeHtml(m.subject)}</p>` : ''}
+              <p class="text-xs whitespace-pre-wrap break-words leading-relaxed">${escapeHtml(m.content || '[Tiada teks]')}</p>
+              <p class="text-[9.5px] text-slate-400 text-right mt-1 font-mono">${timeStr}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      bodyEl.scrollTop = bodyEl.scrollHeight;
+    }
+
+    function backToConvListMobile() {
+      document.getElementById('msgSidebarPane').classList.remove('hidden');
+      const chatPane = document.getElementById('msgChatPane');
+      chatPane.classList.add('hidden');
+      chatPane.classList.remove('flex');
+    }
+
+    // ==========================================
+    // UBAH STATUS (DONE / KUNKWAN TEAM) & CHANGES LOG
+    // ==========================================
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.status-dropdown-menu').forEach(el => el.classList.add('hidden'));
+    });
+
+    function toggleStatusMenu(event, connId) {
+      event.stopPropagation();
+      const target = document.getElementById(`statusMenu-${connId}`);
+      const wasHidden = target.classList.contains('hidden');
+      document.querySelectorAll('.status-dropdown-menu').forEach(el => el.classList.add('hidden'));
+      if (wasHidden) {
+        target.classList.remove('hidden');
+      }
+    }
+
+    async function changeConnectionStatus(connId, newStatus) {
+      document.querySelectorAll('.status-dropdown-menu').forEach(el => el.classList.add('hidden'));
+
+      const { error } = await sb.rpc('update_connection_status', {
+        p_connection_id: connId,
+        p_new_status: newStatus
+      });
+
+      if (error) {
+        alert(`Gagal mengemas kini status: ${error.message}`);
+        return;
+      }
+
+      await Promise.all([
+        loadAnalyticsAndChart(),
+        loadConnections()
+      ]);
+    }
+
+    async function loadChangesLog() {
+      const tbody = document.getElementById('logsTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400">Memuatkan rekod perubahan...</td></tr>';
+
+      const teamFilter = getActiveTeamFilter();
+      let query = sb
+        .from('linkedin_changes_log')
+        .select('*')
+        .order('changed_at', { ascending: false })
+        .limit(100);
+
+      if (teamFilter !== 'ALL') {
+        query = query.eq('pic_team', teamFilter);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-rose-500 font-semibold">Ralat: ${escapeHtml(error.message)}</td></tr>`;
+        return;
+      }
+
+      const logs = data || [];
+      document.getElementById('badgeTabLogs').textContent = logs.length.toLocaleString();
+
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-10 text-center text-slate-400">Belum ada sebarang rekod perubahan.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(log => {
+        const timeStr = log.changed_at
+          ? new Date(log.changed_at).toLocaleString('ms-MY', {
+              timeZone: 'Asia/Kuala_Lumpur',
+              day: '2-digit', month: '2-digit', year: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            })
+          : '-';
+
+        const actionHtml = log.is_reverted
+          ? `<span class="inline-block px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-slate-100 text-slate-500 border border-slate-200">✓ Reverted (${escapeHtml(log.reverted_by || '-')})</span>`
+          : `<button onclick="revertChange('${log.id}')"
+               class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-[10px] sm:text-xs transition cursor-pointer">
+               ↩ Revert
+             </button>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition ${log.is_reverted ? 'opacity-60' : ''}">
+            <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap font-mono text-slate-600">${timeStr}</td>
+            <td class="py-2.5 px-2 sm:px-3 font-bold text-slate-800">${escapeHtml(log.changed_by || '-')}</td>
+            <td class="py-2.5 px-2 sm:px-3 font-semibold text-slate-900">
+              ${log.profile_url
+                ? `<a href="${escapeHtml(log.profile_url)}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">${escapeHtml(log.prospect_name || '-')} ↗</a>`
+                : escapeHtml(log.prospect_name || '-')}
+            </td>
+            <td class="py-2.5 px-2 sm:px-3 font-bold text-indigo-700">${escapeHtml(log.pic_team || '-')}</td>
+            <td class="py-2.5 px-2 sm:px-3 whitespace-nowrap">
+              <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">${escapeHtml(log.old_status || 'No')}</span>
+              <span class="mx-1 text-slate-400">→</span>
+              <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[10px]">${escapeHtml(log.new_status || '-')}</span>
+            </td>
+            <td class="py-2.5 px-2 sm:px-3 text-center whitespace-nowrap">${actionHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function revertChange(logId) {
+      if (!confirm('Pasti mahu revert perubahan ini kembali kepada status asal?')) return;
+
+      const { error } = await sb.rpc('revert_connection_status', {
+        p_log_id: logId
+      });
+
+      if (error) {
+        alert(`Gagal revert: ${error.message}`);
+        return;
+      }
+
+      await Promise.all([
+        loadAnalyticsAndChart(),
+        loadConnections(),
+        loadChangesLog()
+      ]);
     }
 
     // ==========================================
